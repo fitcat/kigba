@@ -32,6 +32,9 @@ public class Thumb implements Cpu {
                   new OpcodeMOV_HiReg(), new OpcodeBX(),
                  },
         /*  6 */ {new OpcodeLDR_PcRel()},
+        /*  7 */ {new OpcodeSTR_RegReg(), new OpcodeSTRB_RegReg(),
+                  new OpcodeLDR_RegReg(), new OpcodeLDRB_RegReg(),
+                 },
     };
     
     private Arm7Register register;
@@ -355,6 +358,34 @@ public class Thumb implements Cpu {
         }
     }
 
+    private class OpcodeSTR_RegReg extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodeSTRB_RegReg extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodeLDR_RegReg extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodeLDRB_RegReg extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
     private class OpcodeUndefined extends BasicOpcode implements Opcode {
         @Override
         public String getShortName() {
@@ -458,7 +489,13 @@ public class Thumb implements Cpu {
     }
     
     private Opcode decodeFormat_7() {
-        return null;
+        int right = (instr >>> 6) & 7;
+        int left = (instr >>> 3) & 7;
+        int dst = instr & 7;
+        int bit11_10 = (instr >> 10) & 3;
+        Opcode result = opcodeFormat[7][bit11_10];
+        result.setOperand(dst, left, right);
+        return result;
     }
     
     private Opcode decodeFormat_8() {
