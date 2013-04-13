@@ -11,6 +11,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.AdditionalAnswers.returnsFirstArg;
 import org.mockito.InOrder;
 
 /**
@@ -233,6 +235,20 @@ public class ThumbTest {
             Opcode op = cpu.decode();
             assertOpcodeWithNoOperands(op, "???", "");
         }
+    }
+    
+    @Test
+    public void decodeOpcodeFormat_6() {
+        final int addrPc = 1236;
+        when(mockedRegister.get(Arm7Register.PC)).thenReturn(addrPc);
+        int dst = rand.nextInt(8);
+        int offset = rand.nextInt(256);
+        int instr = (0b01001 << 11) | (dst << 8) | offset;
+        when(mockedMM.fetchHalfWord(addrPc)).thenReturn(instr);
+        cpu.fetch();
+        Opcode op = cpu.decode();
+        int targetAddr = ((addrPc + 4) & ~2) + (offset << 2);
+        assertOpcodeWithTwoOperands(op, "LDR", "PcRel", dst, targetAddr);
     }
 
     @Test
