@@ -31,11 +31,13 @@ public class Thumb implements Cpu {
         /*  5 */ {new OpcodeADD_HiReg(), new OpcodeCMP_HiReg(),
                   new OpcodeMOV_HiReg(), new OpcodeBX(),
                  },
+        /*  6 */ {new OpcodeLDR_PcRel()},
     };
     
     private Arm7Register register;
     private MemoryManager memMgr;
-    private int instr;
+    private int instr;      // the current instruction
+    private int addr;       // the current address of instr
 
     private abstract class BasicOpcode {
         int dst, left, right;   // operands
@@ -340,7 +342,13 @@ public class Thumb implements Cpu {
     }
 
     private class OpcodeBX extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
         
+        }
+    }
+
+    private class OpcodeLDR_PcRel extends BasicOpcode implements Opcode {
         @Override
         public void execute() {
         
@@ -348,7 +356,6 @@ public class Thumb implements Cpu {
     }
 
     private class OpcodeUndefined extends BasicOpcode implements Opcode {
-
         @Override
         public String getShortName() {
             return "???";
@@ -371,9 +378,10 @@ public class Thumb implements Cpu {
     
     @Override
     public void fetch() {
-        int currentPC = getRegister(Arm7Register.PC);
-        instr = memMgr.fetchHalfWord(currentPC);
-        setRegister(Arm7Register.PC, currentPC + 2);
+        int currentPc = getRegister(Arm7Register.PC);
+        addr = currentPc;
+        instr = memMgr.fetchHalfWord(currentPc);
+        setRegister(Arm7Register.PC, currentPc + 2);
     }
     
     private Opcode decodeFormat_1() {
@@ -441,7 +449,12 @@ public class Thumb implements Cpu {
     }
     
     private Opcode decodeFormat_6() {
-        return null;
+        int dst = (instr >>> 8) & 7;
+        int offset = (instr & 0xFF) << 2;
+        int newPc = (addr + 4) & ~2;
+        Opcode result = opcodeFormat[6][0];
+        result.setOperand(dst, newPc + offset);
+        return result;
     }
     
     private Opcode decodeFormat_7() {
