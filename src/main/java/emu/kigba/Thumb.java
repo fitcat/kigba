@@ -19,7 +19,7 @@ public class Thumb implements Cpu {
         /*  3 */ {new OpcodeMOV_Immed(), new OpcodeCMP_Immed(),
                   new OpcodeADD_Immed(), new OpcodeSUB_Immed(),
                  },
-        /*  4 */ {new OpcodeAND_Reg(), new OpcodeXOR_Reg(),
+        /*  4 */ {new OpcodeAND_Reg(), new OpcodeEOR_Reg(),
                   new OpcodeLSL_Reg(), new OpcodeLSR_Reg(),
                   new OpcodeASR_Reg(), new OpcodeADC_Reg(),
                   new OpcodeSBC_Reg(), new OpcodeROR_Reg(),
@@ -34,6 +34,12 @@ public class Thumb implements Cpu {
         /*  6 */ {new OpcodeLDR_PcRel()},
         /*  7 */ {new OpcodeSTR_RegReg(), new OpcodeSTRB_RegReg(),
                   new OpcodeLDR_RegReg(), new OpcodeLDRB_RegReg(),
+                 },
+        /*  8 */ {new OpcodeSTRH_RegReg(), new OpcodeLDSB_RegReg(),
+                  new OpcodeLDRH_RegReg(), new OpcodeLDSH_RegReg(),
+                 },
+        /*  9 */ {new OpcodeSTR_RegImmed(), new OpcodeLDR_RegImmed(),
+                  new OpcodeSTRB_RegImmed(), new OpcodeLDRB_RegImmed(),
                  },
     };
     
@@ -200,7 +206,7 @@ public class Thumb implements Cpu {
         }
     }
 
-    private class OpcodeXOR_Reg extends BasicOpcode implements Opcode {
+    private class OpcodeEOR_Reg extends BasicOpcode implements Opcode {
         
         @Override
         public void execute() {
@@ -386,6 +392,62 @@ public class Thumb implements Cpu {
         }
     }
 
+    private class OpcodeSTRH_RegReg extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodeLDSB_RegReg extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodeLDRH_RegReg extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodeLDSH_RegReg extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodeSTR_RegImmed extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodeLDR_RegImmed extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodeSTRB_RegImmed extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodeLDRB_RegImmed extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
     private class OpcodeUndefined extends BasicOpcode implements Opcode {
         @Override
         public String getShortName() {
@@ -499,11 +561,23 @@ public class Thumb implements Cpu {
     }
     
     private Opcode decodeFormat_8() {
-        return null;
+        int right = (instr >>> 6) & 7;
+        int left = (instr >>> 3) & 7;
+        int dst = instr & 7;
+        int bit11_10 = (instr >> 10) & 3;
+        Opcode result = opcodeFormat[8][bit11_10];
+        result.setOperand(dst, left, right);
+        return result;
     }
     
     private Opcode decodeFormat_9() {
-        return null;
+        int immed = (instr >>> 6) & 0x1F;
+        int reg = (instr >>> 3) & 7;
+        int dst = instr & 7;
+        int bit12_11 = (instr >> 11) & 3;
+        Opcode result = opcodeFormat[9][bit12_11];
+        result.setOperand(dst, reg, immed);
+        return result;
     }
     
     private Opcode decodeFormat_10() {
@@ -577,7 +651,7 @@ public class Thumb implements Cpu {
             case 0: return decodeFormat_1_2();
             case 1: return decodeFormat_3();
             case 2: return decodeFormat_4_to_8();
-            
+            case 3: return decodeFormat_9();
         }
         return Undefined;
     }
