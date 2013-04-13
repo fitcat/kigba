@@ -164,7 +164,7 @@ public class ThumbTest {
     @Test
     public void decodeFormat_4() {
         final String[] name = {
-            "AND", "XOR", "LSL", "LSR",
+            "AND", "EOR", "LSL", "LSR",
             "ASR", "ADC", "SBC", "ROR",
             "TST", "NEG", "CMP", "CMN",
             "ORR", "MUL", "BIC", "MVN",
@@ -249,6 +249,40 @@ public class ThumbTest {
         Opcode op = cpu.decode();
         int targetAddr = ((addrPc + 4) & ~2) + (offset << 2);
         assertOpcodeWithTwoOperands(op, "LDR", "PcRel", dst, targetAddr);
+    }
+
+    @Test
+    public void decodeFormat_7() {
+        final String[] name = {
+            "STR", "STRB", "LDR", "LDRB",
+        };
+        for (int i = 0; i < name.length; ++i) {
+            int dst = rand.nextInt(8);
+            int left = rand.nextInt(8);
+            int right = rand.nextInt(8);
+            int instr = (0b0101 << 12) | (i << 10) | (right << 6) | (left << 3) | dst;
+            when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
+            cpu.fetch();
+            Opcode op = cpu.decode();
+            assertOpcodeWithThreeOperands(op, name[i], "RegReg", dst, left, right);
+        }
+    }
+
+    @Test
+    public void decodeFormat_8() {
+        final String[] name = {
+            "STRH", "LDSB", "LDRH", "LDSH",
+        };
+        for (int i = 0; i < name.length; ++i) {
+            int dst = rand.nextInt(8);
+            int left = rand.nextInt(8);
+            int right = rand.nextInt(8);
+            int instr = (0b0101 << 12) | (i << 10) | 1 << 9 | (right << 6) | (left << 3) | dst;
+            when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
+            cpu.fetch();
+            Opcode op = cpu.decode();
+            assertOpcodeWithThreeOperands(op, name[i], "RegReg", dst, left, right);
+        }
     }
 
     @Test
