@@ -43,6 +43,7 @@ public class Thumb implements Cpu {
                  },
         /* 10 */ {new OpcodeSTRH_RegImmed(), new OpcodeLDRH_RegImmed()},
         /* 11 */ {new OpcodeSTR_SpRel(), new OpcodeLDR_SpRel()},
+        /* 12 */ {new OpcodeADD_PcRel(), new OpcodeADD_SpRel()},
     };
 
     
@@ -479,6 +480,20 @@ public class Thumb implements Cpu {
         }
     }
 
+    private class OpcodeADD_PcRel extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodeADD_SpRel extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
     private class OpcodeUndefined extends BasicOpcode implements Opcode {
         @Override
         public String getShortName() {
@@ -632,7 +647,12 @@ public class Thumb implements Cpu {
     }
     
     private Opcode decodeFormat_12() {
-        return null;
+        int immed = (instr & 0xFF) << 2;    // in step of 4
+        int dst = (instr >>>8) & 7;
+        int bit11 = (instr >> 11) & 1;
+        Opcode result = opcodeFormat[12][bit11];
+        result.setOperand(dst, immed);
+        return result;
     }
     
     private Opcode decodeFormat_13() {
@@ -693,6 +713,20 @@ public class Thumb implements Cpu {
         return decodeFormat_11();
     }
     
+    private Opcode decodeFormat_12_14() {
+        if ((instr & (1 << 12)) == 0)
+            return decodeFormat_12();
+        return decodeFormat_13_14();
+    }
+    
+    private Opcode decodeFormat_13_14() {
+        if ((instr & (1 << 10)) != 0)
+            return decodeFormat_14();
+        if ((instr & (0xF << 8)) == 0)
+            return decodeFormat_13();
+        return Undefined;
+    }
+    
     @Override
     public Opcode decode() {
         int bit15_13 = (instr >> 13) & 7;
@@ -702,6 +736,7 @@ public class Thumb implements Cpu {
             case 2: return decodeFormat_4_to_8();
             case 3: return decodeFormat_9();
             case 4: return decodeFormat_10_11();
+            case 5: return decodeFormat_12_14();
         }
         return Undefined;
     }

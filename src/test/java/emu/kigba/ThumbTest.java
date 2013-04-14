@@ -339,6 +339,26 @@ public class ThumbTest {
     }
 
     @Test
+    public void decodeFormat_12() {
+        final String[] name = {
+            "ADD", "ADD",
+        };
+        final String[] extraName = {
+            "PcRel", "SpRel",
+        };
+        for (int i = 0; i < name.length; ++i) {
+            int dst = rand.nextInt(8);
+            int immed = rand.nextInt(256);
+            int instr = (0b1010 << 12) | (i << 11) | (dst << 8) | immed;
+            when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
+            cpu.fetch();
+            Opcode op = cpu.decode();
+            immed <<= 2;        // step in 4
+            assertOpcodeWithTwoOperands(op, name[i], extraName[i], dst, immed);
+        }
+    }
+
+    @Test
     public void decodeOpcodeUndefined() {
         // undefined instruction
         int instr = 0xFFFF;
