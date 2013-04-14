@@ -298,7 +298,8 @@ public class ThumbTest {
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
             Opcode op = cpu.decode();
-            assertOpcodeWithThreeOperands(op, name[i], "RegImmed", dst, reg, immed << (i < 2 ? 2 : 0));
+            immed <<= (i < 2 ? 2 : 0);  // step in 4 for WORD accesses
+            assertOpcodeWithThreeOperands(op, name[i], "RegImmed", dst, reg, immed);
         }
     }
 
@@ -315,7 +316,25 @@ public class ThumbTest {
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
             Opcode op = cpu.decode();
-            assertOpcodeWithThreeOperands(op, name[i], "RegImmed", dst, reg, immed << 1);
+            immed <<= 1;    // step in 2 for HALFWORD accesses
+            assertOpcodeWithThreeOperands(op, name[i], "RegImmed", dst, reg, immed);
+        }
+    }
+
+    @Test
+    public void decodeFormat_11() {
+        final String[] name = {
+            "STR", "LDR",
+        };
+        for (int i = 0; i < name.length; ++i) {
+            int dst = rand.nextInt(8);
+            int immed = rand.nextInt(256);
+            int instr = (0b1001 << 12) | (i << 11) | (dst << 8) | immed;
+            when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
+            cpu.fetch();
+            Opcode op = cpu.decode();
+            immed <<= 2;        // step in 4 for WORD accesses
+            assertOpcodeWithTwoOperands(op, name[i], "SpRel", dst, immed);
         }
     }
 
