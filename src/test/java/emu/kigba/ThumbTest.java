@@ -359,6 +359,41 @@ public class ThumbTest {
     }
 
     @Test
+    public void decodeFormat_13() {
+        final String[] name = {
+            "ADD", "ADD",
+        };
+        final String[] extraName = {
+            "SpInc", "SpDec",
+        };
+        for (int i = 0; i < name.length; ++i) {
+            int immed = rand.nextInt(128);
+            int instr = (0b10110000 << 8) | (i << 7) | immed;
+            when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
+            cpu.fetch();
+            Opcode op = cpu.decode();
+            immed <<= 2;        // step in 4
+            assertOpcodeWithOneOperand(op, name[i], extraName[i], immed);
+        }
+    }
+
+    @Test
+    public void decodeFormat_13_Invalid() {
+        int mask = ~4;      // bit 10 must be clear
+        for (int i = 1; i < 16; ++i) {
+            int immed = rand.nextInt(128);
+            int signed = rand.nextInt(2);
+            int bit_11_8 = (i & mask) << 8;
+            if (bit_11_8 == 0) continue;    // only non-zero for bit 8-11 are invalid
+            int instr = (0b1011 << 12) | bit_11_8 | (signed << 7) | immed;
+            when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
+            cpu.fetch();
+            Opcode op = cpu.decode();
+            assertOpcodeWithNoOperands(op, "???", "");
+        }
+    }
+
+    @Test
     public void decodeOpcodeUndefined() {
         // undefined instruction
         int instr = 0xFFFF;

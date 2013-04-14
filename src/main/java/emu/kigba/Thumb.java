@@ -44,6 +44,7 @@ public class Thumb implements Cpu {
         /* 10 */ {new OpcodeSTRH_RegImmed(), new OpcodeLDRH_RegImmed()},
         /* 11 */ {new OpcodeSTR_SpRel(), new OpcodeLDR_SpRel()},
         /* 12 */ {new OpcodeADD_PcRel(), new OpcodeADD_SpRel()},
+        /* 13 */ {new OpcodeADD_SpInc(), new OpcodeADD_SpDec()},
     };
 
     
@@ -494,6 +495,20 @@ public class Thumb implements Cpu {
         }
     }
 
+    private class OpcodeADD_SpInc extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodeADD_SpDec extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
     private class OpcodeUndefined extends BasicOpcode implements Opcode {
         @Override
         public String getShortName() {
@@ -524,46 +539,46 @@ public class Thumb implements Cpu {
     }
     
     private Opcode decodeFormat_1() {
-        int bit12_11 = (instr >> 11) & 0x3;
+        int bit12_11 = (instr >>> 11) & 0x3;
         Opcode result = opcodeFormat[1][bit12_11];
-        int immed = (instr >> 6) & 0b11111;
-        int src = (instr >> 3) & 0b111;
+        int immed = (instr >>> 6) & 0b11111;
+        int src = (instr >>> 3) & 0b111;
         int dst = instr & 0b111;
         result.setOperand(dst, src, immed);
         return result;
     }
     
     private Opcode decodeFormat_2() {
-        int bit10_9 = (instr >> 9) & 0b11;
+        int bit10_9 = (instr >>> 9) & 0b11;
         Opcode result = opcodeFormat[2][bit10_9];
         int dst = instr & 0b111;
-        int left = (instr >> 3) & 0b111;
-        int right = (instr >> 6) & 0b111;
+        int left = (instr >>> 3) & 0b111;
+        int right = (instr >>> 6) & 0b111;
         result.setOperand(dst, left, right);
         return result;
     }
     
     private Opcode decodeFormat_1_2() {
-        int bit12_11 = (instr >> 11) & 3;
+        int bit12_11 = (instr >>> 11) & 3;
         if (bit12_11 != 0b11)
             return decodeFormat_1();
         return decodeFormat_2();
     }
     
     private Opcode decodeFormat_3() {
-        int bit12_11 = (instr >> 11) & 3;
+        int bit12_11 = (instr >>> 11) & 3;
         Opcode result = opcodeFormat[3][bit12_11];
-        int dst = (instr >> 8) & 7;
+        int dst = (instr >>> 8) & 7;
         int src = instr & 0xFF;
         result.setOperand(dst, src);
         return result;
     }
     
     private Opcode decodeFormat_4() {
-        int bit9_6 = (instr >> 6) & 0xF;
+        int bit9_6 = (instr >>> 6) & 0xF;
         Opcode result = opcodeFormat[4][bit9_6];
         int dst = instr & 7;
-        int src = (instr >> 3) & 7;
+        int src = (instr >>> 3) & 7;
         result.setOperand(dst, src);
         return result;
     }
@@ -600,7 +615,7 @@ public class Thumb implements Cpu {
         int right = (instr >>> 6) & 7;
         int left = (instr >>> 3) & 7;
         int dst = instr & 7;
-        int bit11_10 = (instr >> 10) & 3;
+        int bit11_10 = (instr >>> 10) & 3;
         Opcode result = opcodeFormat[7][bit11_10];
         result.setOperand(dst, left, right);
         return result;
@@ -610,7 +625,7 @@ public class Thumb implements Cpu {
         int right = (instr >>> 6) & 7;
         int left = (instr >>> 3) & 7;
         int dst = instr & 7;
-        int bit11_10 = (instr >> 10) & 3;
+        int bit11_10 = (instr >>> 10) & 3;
         Opcode result = opcodeFormat[8][bit11_10];
         result.setOperand(dst, left, right);
         return result;
@@ -620,7 +635,7 @@ public class Thumb implements Cpu {
         int immed = (instr >>> 6) & 0x1F;
         int reg = (instr >>> 3) & 7;
         int dst = instr & 7;
-        int bit12_11 = (instr >> 11) & 3;
+        int bit12_11 = (instr >>> 11) & 3;
         Opcode result = opcodeFormat[9][bit12_11];
         immed <<= (bit12_11 < 2 ? 2 : 0);   // step of 4 for WORD
         result.setOperand(dst, reg, immed);
@@ -631,7 +646,7 @@ public class Thumb implements Cpu {
         int immed = ((instr >>> 6) & 0x1F) << 1;    // in step of 2
         int reg = (instr >>> 3) & 7;
         int dst = instr & 7;
-        int bit11 = (instr >> 11) & 1;
+        int bit11 = (instr >>> 11) & 1;
         Opcode result = opcodeFormat[10][bit11];
         result.setOperand(dst, reg, immed);
         return result;
@@ -640,7 +655,7 @@ public class Thumb implements Cpu {
     private Opcode decodeFormat_11() {
         int immed = (instr & 0xFF) << 2;    // in step of 4
         int dst = (instr >>>8) & 7;
-        int bit11 = (instr >> 11) & 1;
+        int bit11 = (instr >>> 11) & 1;
         Opcode result = opcodeFormat[11][bit11];
         result.setOperand(dst, immed);
         return result;
@@ -648,15 +663,21 @@ public class Thumb implements Cpu {
     
     private Opcode decodeFormat_12() {
         int immed = (instr & 0xFF) << 2;    // in step of 4
-        int dst = (instr >>>8) & 7;
-        int bit11 = (instr >> 11) & 1;
+        int dst = (instr >>> 8) & 7;
+        int bit11 = (instr >>> 11) & 1;
         Opcode result = opcodeFormat[12][bit11];
         result.setOperand(dst, immed);
         return result;
     }
     
     private Opcode decodeFormat_13() {
-        return null;
+        int bit_11_8 = (instr >>> 8) & 15;
+        if (bit_11_8 != 0) return Undefined;
+        int immed = (instr & 0x7F) << 2;    // in step of 4
+        int bit7 = (instr >>> 7) & 1;
+        Opcode result = opcodeFormat[13][bit7];
+        result.setOperand(immed);
+        return result;
     }
     
     private Opcode decodeFormat_14() {
@@ -720,11 +741,9 @@ public class Thumb implements Cpu {
     }
     
     private Opcode decodeFormat_13_14() {
-        if ((instr & (1 << 10)) != 0)
-            return decodeFormat_14();
-        if ((instr & (0xF << 8)) == 0)
+        if ((instr & (1 << 10)) == 0)
             return decodeFormat_13();
-        return Undefined;
+        return decodeFormat_14();
     }
     
     @Override
