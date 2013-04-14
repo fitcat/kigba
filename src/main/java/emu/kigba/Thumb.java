@@ -45,6 +45,9 @@ public class Thumb implements Cpu {
         /* 11 */ {new OpcodeSTR_SpRel(), new OpcodeLDR_SpRel()},
         /* 12 */ {new OpcodeADD_PcRel(), new OpcodeADD_SpRel()},
         /* 13 */ {new OpcodeADD_SpInc(), new OpcodeADD_SpDec()},
+        /* 14 */ {new OpcodePUSH_Reg(), new OpcodePOP_Reg(),
+                  new OpcodePUSH_RegLr(), new OpcodePOP_RegPc(),
+                 },
     };
 
     
@@ -509,6 +512,34 @@ public class Thumb implements Cpu {
         }
     }
 
+    private class OpcodePUSH_Reg extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodePOP_Reg extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodePUSH_RegLr extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodePOP_RegPc extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
     private class OpcodeUndefined extends BasicOpcode implements Opcode {
         @Override
         public String getShortName() {
@@ -681,7 +712,15 @@ public class Thumb implements Cpu {
     }
     
     private Opcode decodeFormat_14() {
-        return null;
+        int bit_9 = (instr >>> 9) & 1;
+        if (bit_9 != 0) return Undefined;
+        int bit_11 = (instr >>> 11) & 1;
+        int bit_8 = (instr >>> 8) & 1;
+        int type = (bit_8 << 1) + bit_11;
+        int regList = instr & 0xFF;
+        Opcode result = opcodeFormat[14][type];
+        result.setOperand(regList);
+        return result;
     }
     
     private Opcode decodeFormat_15() {

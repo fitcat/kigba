@@ -394,6 +394,41 @@ public class ThumbTest {
     }
 
     @Test
+    public void decodeFormat_14() {
+        final String[] name = {
+            "PUSH", "POP", "PUSH", "POP",
+        };
+        final String[] extraName = {
+            "Reg", "Reg", "RegLr", "RegPc",
+        };
+        for (int i = 0; i < name.length; ++i) {
+            int regList = rand.nextInt(256);
+            int bit_11 = i & 1;   // 0 - PUSH, 1 - POP
+            int bit_8 = i >>> 1;  // 0 - no, 1 - LR/PC for PUSH/POP
+            int instr = (0b1011 << 12) | (bit_11 << 11) | (0b10 << 9) | (bit_8 << 8) | regList;
+            when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
+            cpu.fetch();
+            Opcode op = cpu.decode();
+            assertOpcodeWithOneOperand(op, name[i], extraName[i], regList);
+        }
+    }
+
+    @Test
+    public void decodeFormat_14_Invalid() {
+        for (int i = 0; i < 4; ++i) {
+            int regList = rand.nextInt(256);
+            int bit_11 = i & 1;   // 0 - PUSH, 1 - POP
+            int bit_8 = i >>> 1;  // 0 - no, 1 - LR/PC for PUSH/POP
+            // bit 9 is set which is invalid
+            int instr = (0b1011 << 12) | (bit_11 << 11) | (0b11 << 9) | (bit_8 << 8) | regList;
+            when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
+            cpu.fetch();
+            Opcode op = cpu.decode();
+            assertOpcodeWithNoOperands(op, "???", "");
+        }
+    }
+
+    @Test
     public void decodeOpcodeUndefined() {
         // undefined instruction
         int instr = 0xFFFF;
