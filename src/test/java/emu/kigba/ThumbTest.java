@@ -286,6 +286,40 @@ public class ThumbTest {
     }
 
     @Test
+    public void decodeFormat_9() {
+        final String[] name = {
+            "STR", "LDR", "STRB", "LDRB",
+        };
+        for (int i = 0; i < name.length; ++i) {
+            int dst = rand.nextInt(8);
+            int reg = rand.nextInt(8);
+            int immed = rand.nextInt(32);
+            int instr = (0b011 << 13) | (i << 11) | (immed << 6) | (reg << 3) | dst;
+            when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
+            cpu.fetch();
+            Opcode op = cpu.decode();
+            assertOpcodeWithThreeOperands(op, name[i], "RegImmed", dst, reg, immed << (i < 2 ? 2 : 0));
+        }
+    }
+
+    @Test
+    public void decodeFormat_10() {
+        final String[] name = {
+            "STRH", "LDRH",
+        };
+        for (int i = 0; i < name.length; ++i) {
+            int dst = rand.nextInt(8);
+            int reg = rand.nextInt(8);
+            int immed = rand.nextInt(32);
+            int instr = (0b1000 << 12) | (i << 11) | (immed << 6) | (reg << 3) | dst;
+            when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
+            cpu.fetch();
+            Opcode op = cpu.decode();
+            assertOpcodeWithThreeOperands(op, name[i], "RegImmed", dst, reg, immed << 1);
+        }
+    }
+
+    @Test
     public void decodeOpcodeUndefined() {
         // undefined instruction
         int instr = 0xFFFF;
