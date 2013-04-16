@@ -48,6 +48,7 @@ public class Thumb implements Cpu {
         /* 14 */ {new OpcodePUSH_Reg(), new OpcodePOP_Reg(),
                   new OpcodePUSH_RegLr(), new OpcodePOP_RegPc(),
                  },
+        /* 15 */ {new OpcodeSTMIA(), new OpcodeLDMIA()},
     };
 
     
@@ -540,6 +541,20 @@ public class Thumb implements Cpu {
         }
     }
 
+    private class OpcodeSTMIA extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodeLDMIA extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
     private class OpcodeUndefined extends BasicOpcode implements Opcode {
         @Override
         public String getShortName() {
@@ -635,10 +650,9 @@ public class Thumb implements Cpu {
     
     private Opcode decodeFormat_6() {
         int dst = (instr >>> 8) & 7;
-        int offset = (instr & 0xFF) << 2;
-        int newPc = (addr + 4) & ~2;
+        int offset = (instr & 0xFF) << 2;   // step in 4
         Opcode result = opcodeFormat[6][0];
-        result.setOperand(dst, newPc + offset);
+        result.setOperand(dst, offset);
         return result;
     }
     
@@ -724,7 +738,12 @@ public class Thumb implements Cpu {
     }
     
     private Opcode decodeFormat_15() {
-        return null;
+        int regList = (instr & 0xFF);
+        int regBase = (instr >>> 8) & 7;
+        int bit11 = (instr >>> 11) & 1;
+        Opcode result = opcodeFormat[15][bit11];
+        result.setOperand(regBase, regList);
+        return result;
     }
     
     private Opcode decodeFormat_16() {
@@ -785,6 +804,19 @@ public class Thumb implements Cpu {
         return decodeFormat_14();
     }
     
+    private Opcode decodeFormat_15_to_17() {
+        if ((instr & (1 << 12)) == 0)
+            return decodeFormat_15();
+        return decodeFormat_16_17();
+    }
+    
+    private Opcode decodeFormat_16_17() {
+        int bit_8_11 = (instr >>> 8) & 0xF;
+        if (bit_8_11 != 0b1111)
+            return decodeFormat_16();
+        return decodeFormat_17();
+    }
+    
     @Override
     public Opcode decode() {
         int bit15_13 = (instr >> 13) & 7;
@@ -795,6 +827,7 @@ public class Thumb implements Cpu {
             case 3: return decodeFormat_9();
             case 4: return decodeFormat_10_11();
             case 5: return decodeFormat_12_14();
+            case 6: return decodeFormat_15_to_17();
         }
         return Undefined;
     }

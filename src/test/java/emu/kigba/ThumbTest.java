@@ -247,8 +247,8 @@ public class ThumbTest {
         when(mockedMM.fetchHalfWord(addrPc)).thenReturn(instr);
         cpu.fetch();
         Opcode op = cpu.decode();
-        int targetAddr = ((addrPc + 4) & ~2) + (offset << 2);
-        assertOpcodeWithTwoOperands(op, "LDR", "PcRel", dst, targetAddr);
+        offset <<= 2;   // step in 4
+        assertOpcodeWithTwoOperands(op, "LDR", "PcRel", dst, offset);
     }
 
     @Test
@@ -425,6 +425,22 @@ public class ThumbTest {
             cpu.fetch();
             Opcode op = cpu.decode();
             assertOpcodeWithNoOperands(op, "???", "");
+        }
+    }
+
+    @Test
+    public void decodeFormat_15() {
+        final String[] name = {
+            "STMIA", "LDMIA",
+        };
+        for (int i = 0; i < name.length; ++i) {
+            int regBase = rand.nextInt(8);
+            int regList = rand.nextInt(256);
+            int instr = (0b1100 << 12) | (i << 11) | (regBase << 8) | regList;
+            when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
+            cpu.fetch();
+            Opcode op = cpu.decode();
+            assertOpcodeWithTwoOperands(op, name[i], "", regBase, regList);
         }
     }
 
