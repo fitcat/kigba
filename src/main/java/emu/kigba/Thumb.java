@@ -59,6 +59,7 @@ public class Thumb implements Cpu {
                  },
         /* 17 */ {new OpcodeSWI()},
         /* 18 */ {new OpcodeB()},
+        /* 19 */ {new OpcodeBL()},
     };
 
     
@@ -676,6 +677,13 @@ public class Thumb implements Cpu {
         }
     }
 
+    private class OpcodeBL extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
     private class OpcodeUndefined extends BasicOpcode implements Opcode {
         @Override
         public String getShortName() {
@@ -885,7 +893,7 @@ public class Thumb implements Cpu {
         if (bit_11 != 0)
             return Undefined;
         int offset = instr & 0x7FF;
-        if (offset >= 1024) {     // offset is neative
+        if (offset >= 1024) {     // offset is negative
             offset |= 0xFFFFF800; // set all upper bits
         }
         offset <<= 1;       // step in 2
@@ -895,7 +903,28 @@ public class Thumb implements Cpu {
     }
     
     private Opcode decodeFormat_19() {
-        return null;
+        int instrLo = instr;    // save the first instruction
+        int lobit_11 = (instrLo >>> 11) & 1;
+        // Bit 11 in first instruction must be clear
+        if (lobit_11 != 0)
+            return Undefined;
+        fetch();                // fetch the second instruction
+        int instrHi = instr;    // get the second instruction
+        int hibit_11 = (instrHi >>> 11) & 1;
+        // Bit 11 in second instruction must be set
+        if (hibit_11 != 1)
+            return Undefined;
+        instr |= instrLo << 16; // store the 2 instructions together
+        int offset = instrLo & 0x7FF;
+        offset <<= 11;
+        offset |= instrHi & 0x7FF;
+        if (offset >= 0x200000) {   // offset is negative
+            offset |= 0xFFC00000;   // set all upper bits
+        }
+        offset <<= 1;       // step in 2
+        Opcode result = opcodeFormat[19][0];
+        result.setOperand(offset);
+        return result;
     }
     
     private Opcode decodeFormat_4_5() {

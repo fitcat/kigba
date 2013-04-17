@@ -511,4 +511,49 @@ public class ThumbTest {
         assertOpcodeWithNoOperands(op, "???", "");
     }
 
+    @Test
+    public void decodeFormat_19() {
+        final int [] offset = {
+            0, 2, 0x1FFFFF, 0x200000 /* -0x200000 */, 0x3FFFFF /* -1 */
+        };
+        final int [] expect = {
+            0, 4, 0x3FFFFE, -0x400000, -2,
+        };
+        for (int i = 0; i < offset.length; ++i) {
+            int target = offset[i];
+            int targetLo = target >>> 11;
+            int instrLo = (0b11110 << 11) | targetLo;
+            int targetHi = target & 0x7FF;
+            int instrHi = (0b11111 << 11) | targetHi;
+            when(mockedMM.fetchHalfWord(0)).thenReturn(instrLo).thenReturn(instrHi);
+            cpu.fetch();
+            Opcode op = cpu.decode();
+            assertOpcodeWithOneOperand(op, "BL", "", expect[i]);
+        }
+    }
+
+    @Test
+    public void decodeFormat_19_InvalidInFirstInstruction() {
+        // First instruction bit 11 is set meaning invalid
+        int instrLo = (0b11111 << 11) | rand.nextInt(0x800);
+        // Second instruction bit 11 is set meaning valid
+        int instrHi = (0b11111 << 11) | rand.nextInt(0x800);
+        when(mockedMM.fetchHalfWord(0)).thenReturn(instrLo).thenReturn(instrHi);
+        cpu.fetch();
+        Opcode op = cpu.decode();
+        assertOpcodeWithNoOperands(op, "???", "");
+    }
+
+    @Test
+    public void decodeFormat_19_InvalidInSecondInstruction() {
+        // First instruction bit 11 is clear meaning valid
+        int instrLo = (0b11110 << 11) | rand.nextInt(0x800);
+        // Second instruction bit 11 is clear meaning invalid
+        int instrHi = (0b11110 << 11) | rand.nextInt(0x800);
+        when(mockedMM.fetchHalfWord(0)).thenReturn(instrLo).thenReturn(instrHi);
+        cpu.fetch();
+        Opcode op = cpu.decode();
+        assertOpcodeWithNoOperands(op, "???", "");
+    }
+
 }
