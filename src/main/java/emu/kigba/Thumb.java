@@ -58,6 +58,7 @@ public class Thumb implements Cpu {
                   new OpcodeBGT(), new OpcodeBLE(),
                  },
         /* 17 */ {new OpcodeSWI()},
+        /* 18 */ {new OpcodeB()},
     };
 
     
@@ -668,6 +669,13 @@ public class Thumb implements Cpu {
         }
     }
 
+    private class OpcodeB extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
     private class OpcodeUndefined extends BasicOpcode implements Opcode {
         @Override
         public String getShortName() {
@@ -873,7 +881,15 @@ public class Thumb implements Cpu {
     }
     
     private Opcode decodeFormat_18() {
-        return null;
+        System.out.println("decodeFormat_18");
+        int offset = instr & 0x7FF;
+        if (offset >= 1024) {     // offset is neative
+            offset |= 0xFFFFF800; // set all upper bits
+        }
+        offset <<= 1;       // step in 2
+        Opcode result = opcodeFormat[18][0];
+        result.setOperand(offset);
+        return result;
     }
     
     private Opcode decodeFormat_19() {
@@ -935,6 +951,13 @@ public class Thumb implements Cpu {
         return decodeFormat_17();
     }
     
+    private Opcode decodeFormat_18_19() {
+        int bit_12 = (instr >>> 12) & 1;
+        if (bit_12 == 0)
+            return decodeFormat_18();
+        return decodeFormat_19();
+    }
+    
     @Override
     public Opcode decode() {
         int bit15_13 = (instr >> 13) & 7;
@@ -946,8 +969,9 @@ public class Thumb implements Cpu {
             case 4: return decodeFormat_10_11();
             case 5: return decodeFormat_12_14();
             case 6: return decodeFormat_15_to_17();
+            default:    // must be 7
+                return decodeFormat_18_19();
         }
-        return Undefined;
     }
     
     @Override

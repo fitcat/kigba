@@ -484,13 +484,21 @@ public class ThumbTest {
     }
 
     @Test
-    public void decodeOpcodeUndefined() {
-        // undefined instruction
-        int instr = 0xFFFF;
-        when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
-        cpu.fetch();
-        Opcode op = cpu.decode();
-        assertOpcodeWithNoOperands(op, "???", "");
+    public void decodeFormat_18() {
+        final int [] offset = {
+            0, 2, 1023, 1024 /* -1024 */, 2047 /* -1 */
+        };
+        final int [] expect = {
+            0, 4, 2046, -2048, -2,
+        };
+        for (int i = 0; i < offset.length; ++i) {
+            int target = offset[i];
+            int instr = (0b11100 << 11) | target;
+            when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
+            cpu.fetch();
+            Opcode op = cpu.decode();
+            assertOpcodeWithOneOperand(op, "B", "", expect[i]);
+        }
     }
-    
+
 }
