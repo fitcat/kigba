@@ -445,6 +445,35 @@ public class ThumbTest {
     }
 
     @Test
+    public void decodeFormat_16() {
+        final String[] name = {
+            "BEQ", "BNE", "BCS", "BCC",
+            "BMI", "BPL", "BVS", "BVC",
+            "BHI", "BLS", "BGE", "BLT",
+            "BGT", "BLE", 
+        };
+        for (int i = 0; i < name.length; ++i) {
+            int offset = rand.nextInt(256);
+            int instr = (0b1101 << 12) | (i << 8) | offset;
+            when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
+            cpu.fetch();
+            Opcode op = cpu.decode();
+            assertOpcodeWithOneOperand(op, name[i], "", offset);
+        }
+    }
+
+    @Test
+    public void decodeFormat_16_Invalid() {
+        int offset = rand.nextInt(256);
+        // bit 8-11 (cond) equals 14 is invalid
+        int instr = (0b1101 << 12) | (14 << 8) | offset;
+        when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
+        cpu.fetch();
+        Opcode op = cpu.decode();
+        assertOpcodeWithNoOperands(op, "???", "");
+    }
+
+    @Test
     public void decodeOpcodeUndefined() {
         // undefined instruction
         int instr = 0xFFFF;

@@ -49,13 +49,20 @@ public class Thumb implements Cpu {
                   new OpcodePUSH_RegLr(), new OpcodePOP_RegPc(),
                  },
         /* 15 */ {new OpcodeSTMIA(), new OpcodeLDMIA()},
+        /* 16 */ {new OpcodeBEQ(), new OpcodeBNE(),
+                  new OpcodeBCS(), new OpcodeBCC(),
+                  new OpcodeBMI(), new OpcodeBPL(),
+                  new OpcodeBVS(), new OpcodeBVC(),
+                  new OpcodeBHI(), new OpcodeBLS(),
+                  new OpcodeBGE(), new OpcodeBLT(),
+                  new OpcodeBGT(), new OpcodeBLE(),
+                 },
     };
 
     
     private Arm7Register register;
     private MemoryManager memMgr;
     private int instr;      // the current instruction
-    private int addr;       // the current address of instr
 
     private abstract class BasicOpcode {
         int dst, left, right;   // operands
@@ -555,6 +562,104 @@ public class Thumb implements Cpu {
         }
     }
 
+    private class OpcodeBEQ extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodeBNE extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodeBCS extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodeBCC extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodeBMI extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodeBPL extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodeBVS extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodeBVC extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodeBHI extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodeBLS extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodeBGE extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodeBLT extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodeBGT extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
+    private class OpcodeBLE extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
     private class OpcodeUndefined extends BasicOpcode implements Opcode {
         @Override
         public String getShortName() {
@@ -579,7 +684,6 @@ public class Thumb implements Cpu {
     @Override
     public void fetch() {
         int currentPc = getRegister(Arm7Register.PC);
-        addr = currentPc;
         instr = memMgr.fetchHalfWord(currentPc);
         setRegister(Arm7Register.PC, currentPc + 2);
     }
@@ -747,7 +851,12 @@ public class Thumb implements Cpu {
     }
     
     private Opcode decodeFormat_16() {
-        return null;
+        int cond = (instr >>> 8) & 0xF;
+        if (cond == 0xE) return Undefined;
+        int offset = instr & 0xFF;
+        Opcode result = opcodeFormat[16][cond];
+        result.setOperand(offset);
+        return result;
     }
     
     private Opcode decodeFormat_17() {
