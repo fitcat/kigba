@@ -57,6 +57,7 @@ public class Thumb implements Cpu {
                   new OpcodeBGE(), new OpcodeBLT(),
                   new OpcodeBGT(), new OpcodeBLE(),
                  },
+        /* 17 */ {new OpcodeSWI()},
     };
 
     
@@ -660,6 +661,13 @@ public class Thumb implements Cpu {
         }
     }
 
+    private class OpcodeSWI extends BasicOpcode implements Opcode {
+        @Override
+        public void execute() {
+        
+        }
+    }
+
     private class OpcodeUndefined extends BasicOpcode implements Opcode {
         @Override
         public String getShortName() {
@@ -860,7 +868,8 @@ public class Thumb implements Cpu {
     }
     
     private Opcode decodeFormat_17() {
-        return null;
+        // the comment immediate field is ignored
+        return opcodeFormat[17][0];
     }
     
     private Opcode decodeFormat_18() {

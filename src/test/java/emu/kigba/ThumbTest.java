@@ -474,6 +474,16 @@ public class ThumbTest {
     }
 
     @Test
+    public void decodeFormat_17() {
+        int swi = rand.nextInt(256);
+        int instr = (0b11011111 << 8) | swi;
+        when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
+        cpu.fetch();
+        Opcode op = cpu.decode();
+        assertOpcodeWithNoOperands(op, "SWI", "");
+    }
+
+    @Test
     public void decodeOpcodeUndefined() {
         // undefined instruction
         int instr = 0xFFFF;
