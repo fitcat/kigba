@@ -881,7 +881,9 @@ public class Thumb implements Cpu {
     }
     
     private Opcode decodeFormat_18() {
-        System.out.println("decodeFormat_18");
+        int bit_11 = (instr >>> 11) & 1;
+        if (bit_11 != 0)
+            return Undefined;
         int offset = instr & 0x7FF;
         if (offset >= 1024) {     // offset is neative
             offset |= 0xFFFFF800; // set all upper bits

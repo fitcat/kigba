@@ -501,4 +501,14 @@ public class ThumbTest {
         }
     }
 
+    @Test
+    public void decodeFormat_18_Invalid() {
+        // bit 11 is set meaning invalid
+        int instr = (0b1110 << 12) | (1 << 11) | rand.nextInt(2048);
+        when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
+        cpu.fetch();
+        Opcode op = cpu.decode();
+        assertOpcodeWithNoOperands(op, "???", "");
+    }
+
 }
