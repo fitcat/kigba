@@ -65,8 +65,8 @@ public class Thumb implements Cpu {
     
     private Arm7Register register;
     private MemoryManager memMgr;
+    private Cycle cycle;
     private int instr;      // the current instruction
-    private ArmCycle cycle = new ArmCycle();
 
     private abstract class BasicOpcode {
         int dst, left, right;   // operands
@@ -745,9 +745,10 @@ public class Thumb implements Cpu {
         }
     }
     
-    public Thumb(Arm7Register r, MemoryManager m) {
-        register = r;
-        memMgr = m;
+    public Thumb(Arm7Register reg, MemoryManager mm, Cycle cycle) {
+        register = reg;
+        memMgr = mm;
+        this.cycle = cycle;
     }
     
     @Override
@@ -1100,11 +1101,6 @@ public class Thumb implements Cpu {
     @Override
     public void setCpuMode(CpuMode newMode) {
         register.setCpuMode(newMode);
-    }
-    
-    @Override
-    public Cycle getCycle() {
-        return cycle;
     }
     
     @Override

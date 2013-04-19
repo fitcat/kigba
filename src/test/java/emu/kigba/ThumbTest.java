@@ -20,6 +20,7 @@ import org.mockito.InOrder;
 public class ThumbTest {
     Arm7Register mockedRegister;
     MemoryManager mockedMM;
+    ArmCycle mockedCycle;
     Cpu cpu;
     java.util.Random rand;
     
@@ -38,7 +39,8 @@ public class ThumbTest {
     public void setUp() {
         mockedRegister = mock(Arm7Register.class);
         mockedMM = mock(MemoryManager.class);
-        cpu = new Thumb(mockedRegister, mockedMM);
+        mockedCycle = mock(ArmCycle.class);
+        cpu = new Thumb(mockedRegister, mockedMM, mockedCycle);
         rand = new java.util.Random();
     }
     
@@ -598,12 +600,6 @@ public class ThumbTest {
         return this;
     }
     
-    private void verifyCycleChange(String msg, ArmCycle oldCycle, ArmCycle expected) {
-        ArmCycle newCycle = (ArmCycle) cpu.getCycle();
-        ArmCycle diff = ArmCycle.subtract(newCycle, oldCycle);
-        assertEquals(msg, expected, diff);
-    }
-
     @Test
     public void executeFormat_1_LSL_withNonZeroImmed() {
         // prepare the instruction
@@ -618,9 +614,6 @@ public class ThumbTest {
         // prepare the value for Rs
         int rsValue = rand.nextInt();
         when(mockedRegister.get(rs)).thenReturn(rsValue);
-        
-        // get old cycle
-        ArmCycle oldCycle = new ArmCycle((ArmCycle) cpu.getCycle());
         
         // execute
         op.execute();
@@ -638,7 +631,7 @@ public class ThumbTest {
         verifyZero(newZf).verifySigned(newNf).verifyCarry(newCf).unchangeOverflow();
         
         // verify cycles taken
-        verifyCycleChange("Take 1S time", oldCycle, ArmCycle.S1);
+        verify(mockedCycle).add(ArmCycle.S1);
     }
 
     @Test
@@ -656,9 +649,6 @@ public class ThumbTest {
         int rsValue = rand.nextInt();
         when(mockedRegister.get(rs)).thenReturn(rsValue);
         
-        // get old cycle
-        ArmCycle oldCycle = new ArmCycle((ArmCycle) cpu.getCycle());
-        
         // execute
         op.execute();
         
@@ -672,7 +662,7 @@ public class ThumbTest {
         verifyZero(newZf).verifySigned(newNf).unchangeCarry().unchangeOverflow();
         
         // verify cycles taken
-        verifyCycleChange("Take 1S time", oldCycle, ArmCycle.S1);
+        verify(mockedCycle).add(ArmCycle.S1);
     }
     
     @Test
@@ -690,9 +680,6 @@ public class ThumbTest {
         int rsValue = rand.nextInt();
         when(mockedRegister.get(rs)).thenReturn(rsValue);
         
-        // get old cycle
-        ArmCycle oldCycle = new ArmCycle((ArmCycle) cpu.getCycle());
-        
         // execute
         op.execute();
         
@@ -709,7 +696,7 @@ public class ThumbTest {
         verifyZero(newZf).verifySigned(newNf).verifyCarry(newCf).unchangeOverflow();
         
         // verify cycles taken
-        verifyCycleChange("Take 1S time", oldCycle, ArmCycle.S1);
+        verify(mockedCycle).add(ArmCycle.S1);
     }
 
     @Test
@@ -727,9 +714,6 @@ public class ThumbTest {
         int rsValue = rand.nextInt();
         when(mockedRegister.get(rs)).thenReturn(rsValue);
         
-        // get old cycle
-        ArmCycle oldCycle = new ArmCycle((ArmCycle) cpu.getCycle());
-        
         // execute
         op.execute();
         
@@ -746,7 +730,7 @@ public class ThumbTest {
         verifyZero(newZf).verifySigned(newNf).verifyCarry(newCf).unchangeOverflow();
         
         // verify cycles taken
-        verifyCycleChange("Take 1S time", oldCycle, ArmCycle.S1);
+        verify(mockedCycle).add(ArmCycle.S1);
     }
     
     @Test
@@ -764,9 +748,6 @@ public class ThumbTest {
         int rsValue = rand.nextInt();
         when(mockedRegister.get(rs)).thenReturn(rsValue);
         
-        // get old cycle
-        ArmCycle oldCycle = new ArmCycle((ArmCycle) cpu.getCycle());
-        
         // execute
         op.execute();
         
@@ -783,7 +764,7 @@ public class ThumbTest {
         verifyZero(newZf).verifySigned(newNf).verifyCarry(newCf).unchangeOverflow();
         
         // verify cycles taken
-        verifyCycleChange("Take 1S time", oldCycle, ArmCycle.S1);
+        verify(mockedCycle).add(ArmCycle.S1);
     }
 
     @Test
@@ -801,9 +782,6 @@ public class ThumbTest {
         int rsValue = rand.nextInt();
         when(mockedRegister.get(rs)).thenReturn(rsValue);
         
-        // get old cycle
-        ArmCycle oldCycle = new ArmCycle((ArmCycle) cpu.getCycle());
-        
         // execute
         op.execute();
         
@@ -820,7 +798,7 @@ public class ThumbTest {
         verifyZero(newZf).verifySigned(newNf).verifyCarry(newCf).unchangeOverflow();
         
         // verify cycles taken
-        verifyCycleChange("Take 1S time", oldCycle, ArmCycle.S1);
+        verify(mockedCycle).add(ArmCycle.S1);
     }
     
 }
