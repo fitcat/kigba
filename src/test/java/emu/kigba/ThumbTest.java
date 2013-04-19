@@ -11,8 +11,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.AdditionalAnswers.returnsFirstArg;
 import org.mockito.InOrder;
 
 /**
@@ -555,5 +553,274 @@ public class ThumbTest {
         Opcode op = cpu.decode();
         assertOpcodeWithNoOperands(op, "???", "");
     }
+    
+    private ThumbTest verifyZero(boolean zf) {
+        if (zf)
+            verify(mockedRegister).setZero();
+        else
+            verify(mockedRegister).clearZero();
+        return this;
+    }
 
+    private ThumbTest verifySigned(boolean nf) {
+        if (nf)
+            verify(mockedRegister).setSigned();
+        else
+            verify(mockedRegister).clearSigned();
+        return this;
+    }
+
+    private ThumbTest verifyCarry(boolean cf) {
+        if (cf)
+            verify(mockedRegister).setCarry();
+        else
+            verify(mockedRegister).clearCarry();
+        return this;
+    }
+
+    private ThumbTest verifyOverflow(boolean vf) {
+        if (vf)
+            verify(mockedRegister).setOverflow();
+        else
+            verify(mockedRegister).clearOverflow();
+        return this;
+    }
+    
+    private ThumbTest unchangeCarry() {
+        verify(mockedRegister, never()).setCarry();
+        verify(mockedRegister, never()).clearCarry();
+        return this;
+    }
+
+    private ThumbTest unchangeOverflow() {
+        verify(mockedRegister, never()).setOverflow();
+        verify(mockedRegister, never()).clearOverflow();
+        return this;
+    }
+    
+    private void verifyCycleChange(String msg, ArmCycle oldCycle, ArmCycle expected) {
+        ArmCycle newCycle = (ArmCycle) cpu.getCycle();
+        ArmCycle diff = ArmCycle.subtract(newCycle, oldCycle);
+        assertEquals(msg, expected, diff);
+    }
+
+    @Test
+    public void executeFormat_1_LSL_withNonZeroImmed() {
+        // prepare the instruction
+        int rd = rand.nextInt(8);
+        int rs = rand.nextInt(8);
+        int immed = rand.nextInt(31) + 1;
+        int instr = (immed << 6) | (rs << 3) | rd;
+        when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
+        cpu.fetch();
+        Opcode op = cpu.decode();
+
+        // prepare the value for Rs
+        int rsValue = rand.nextInt();
+        when(mockedRegister.get(rs)).thenReturn(rsValue);
+        
+        // get old cycle
+        ArmCycle oldCycle = new ArmCycle((ArmCycle) cpu.getCycle());
+        
+        // execute
+        op.execute();
+        
+        // verify the shifted result
+        int expect = rsValue << immed;
+        verify(mockedRegister).set(rd, expect);
+        
+        // verify the flags
+        boolean newZf = (expect == 0);
+        boolean newNf = (expect < 0);
+        boolean newCf;
+        int carry = (rsValue >>> (32 - immed)) & 1;
+        newCf = (carry == 1);
+        verifyZero(newZf).verifySigned(newNf).verifyCarry(newCf).unchangeOverflow();
+        
+        // verify cycles taken
+        verifyCycleChange("Take 1S time", oldCycle, ArmCycle.S1);
+    }
+
+    @Test
+    public void executeFormat_1_LSL_withZeroImmed() {
+        // prepare the instruction
+        int rd = rand.nextInt(8);
+        int rs = rand.nextInt(8);
+        int immed = 0;
+        int instr = (immed << 6) | (rs << 3) | rd;
+        when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
+        cpu.fetch();
+        Opcode op = cpu.decode();
+
+        // prepare the value for Rs
+        int rsValue = rand.nextInt();
+        when(mockedRegister.get(rs)).thenReturn(rsValue);
+        
+        // get old cycle
+        ArmCycle oldCycle = new ArmCycle((ArmCycle) cpu.getCycle());
+        
+        // execute
+        op.execute();
+        
+        // verify the shifted result
+        int expect = rsValue << immed;
+        verify(mockedRegister).set(rd, expect);
+        
+        // verify the flags
+        boolean newZf = (expect == 0);
+        boolean newNf = (expect < 0);
+        verifyZero(newZf).verifySigned(newNf).unchangeCarry().unchangeOverflow();
+        
+        // verify cycles taken
+        verifyCycleChange("Take 1S time", oldCycle, ArmCycle.S1);
+    }
+    
+    @Test
+    public void executeFormat_1_LSR_withNonZeroImmed() {
+        // prepare the instruction
+        int rd = rand.nextInt(8);
+        int rs = rand.nextInt(8);
+        int immed = rand.nextInt(31) + 1;
+        int instr = (1 << 11) | (immed << 6) | (rs << 3) | rd;
+        when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
+        cpu.fetch();
+        Opcode op = cpu.decode();
+
+        // prepare the value for Rs
+        int rsValue = rand.nextInt();
+        when(mockedRegister.get(rs)).thenReturn(rsValue);
+        
+        // get old cycle
+        ArmCycle oldCycle = new ArmCycle((ArmCycle) cpu.getCycle());
+        
+        // execute
+        op.execute();
+        
+        // verify the shifted result
+        int expect = rsValue >>> immed;
+        verify(mockedRegister).set(rd, expect);
+        
+        // verify the flags
+        boolean newZf = (expect == 0);
+        boolean newNf = (expect < 0);
+        boolean newCf;
+        int carry = (rsValue >>> (immed - 1)) & 1;
+        newCf = (carry == 1);
+        verifyZero(newZf).verifySigned(newNf).verifyCarry(newCf).unchangeOverflow();
+        
+        // verify cycles taken
+        verifyCycleChange("Take 1S time", oldCycle, ArmCycle.S1);
+    }
+
+    @Test
+    public void executeFormat_1_LSR_withZeroImmed() {
+        // prepare the instruction
+        int rd = rand.nextInt(8);
+        int rs = rand.nextInt(8);
+        int immed = 0;
+        int instr = (1 << 11) | (immed << 6) | (rs << 3) | rd;
+        when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
+        cpu.fetch();
+        Opcode op = cpu.decode();
+
+        // prepare the value for Rs
+        int rsValue = rand.nextInt();
+        when(mockedRegister.get(rs)).thenReturn(rsValue);
+        
+        // get old cycle
+        ArmCycle oldCycle = new ArmCycle((ArmCycle) cpu.getCycle());
+        
+        // execute
+        op.execute();
+        
+        // verify the shifted result
+        int expect = 0; // immed is zero means 32 => set to 0
+        verify(mockedRegister).set(rd, expect);
+        
+        // verify the flags
+        boolean newZf = (expect == 0);
+        boolean newNf = (expect < 0);
+        boolean newCf;
+        int carry = (rsValue >>> (immed - 1)) & 1;
+        newCf = (carry == 1);
+        verifyZero(newZf).verifySigned(newNf).verifyCarry(newCf).unchangeOverflow();
+        
+        // verify cycles taken
+        verifyCycleChange("Take 1S time", oldCycle, ArmCycle.S1);
+    }
+    
+    @Test
+    public void executeFormat_1_ASR_withNonZeroImmed() {
+        // prepare the instruction
+        int rd = rand.nextInt(8);
+        int rs = rand.nextInt(8);
+        int immed = rand.nextInt(31) + 1;
+        int instr = (1 << 12) | (immed << 6) | (rs << 3) | rd;
+        when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
+        cpu.fetch();
+        Opcode op = cpu.decode();
+
+        // prepare the value for Rs
+        int rsValue = rand.nextInt();
+        when(mockedRegister.get(rs)).thenReturn(rsValue);
+        
+        // get old cycle
+        ArmCycle oldCycle = new ArmCycle((ArmCycle) cpu.getCycle());
+        
+        // execute
+        op.execute();
+        
+        // verify the shifted result
+        int expect = rsValue >> immed;
+        verify(mockedRegister).set(rd, expect);
+        
+        // verify the flags
+        boolean newZf = (expect == 0);
+        boolean newNf = (expect < 0);
+        boolean newCf;
+        int carry = (rsValue >>> (immed - 1)) & 1;
+        newCf = (carry == 1);
+        verifyZero(newZf).verifySigned(newNf).verifyCarry(newCf).unchangeOverflow();
+        
+        // verify cycles taken
+        verifyCycleChange("Take 1S time", oldCycle, ArmCycle.S1);
+    }
+
+    @Test
+    public void executeFormat_1_ASR_withZeroImmed() {
+        // prepare the instruction
+        int rd = rand.nextInt(8);
+        int rs = rand.nextInt(8);
+        int immed = 0;
+        int instr = (1 << 12) | (immed << 6) | (rs << 3) | rd;
+        when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
+        cpu.fetch();
+        Opcode op = cpu.decode();
+
+        // prepare the value for Rs
+        int rsValue = rand.nextInt();
+        when(mockedRegister.get(rs)).thenReturn(rsValue);
+        
+        // get old cycle
+        ArmCycle oldCycle = new ArmCycle((ArmCycle) cpu.getCycle());
+        
+        // execute
+        op.execute();
+        
+        // verify the shifted result
+        int expect = 0; // immed is zero means 32 => set to 0
+        verify(mockedRegister).set(rd, expect);
+        
+        // verify the flags
+        boolean newZf = (expect == 0);
+        boolean newNf = (expect < 0);
+        boolean newCf;
+        int carry = (rsValue >> (immed - 1)) & 1;
+        newCf = (carry == 1);
+        verifyZero(newZf).verifySigned(newNf).verifyCarry(newCf).unchangeOverflow();
+        
+        // verify cycles taken
+        verifyCycleChange("Take 1S time", oldCycle, ArmCycle.S1);
+    }
+    
 }

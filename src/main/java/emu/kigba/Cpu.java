@@ -14,5 +14,11 @@ public interface Cpu {
     int getInstr();
     int getRegister(int which);
     void setRegister(int which, int value);
+    void setZeroFlag(boolean zf);
+    void setSignedFlag(boolean nf);
+    void setCarryFlag(boolean cf);
+    void setOverflowFlag(boolean vf);
     void setCpuMode(CpuMode newMode);
+    Cycle getCycle();
+    void addCycle(Cycle cyc);
 }

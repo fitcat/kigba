@@ -66,6 +66,7 @@ public class Thumb implements Cpu {
     private Arm7Register register;
     private MemoryManager memMgr;
     private int instr;      // the current instruction
+    private ArmCycle cycle = new ArmCycle();
 
     private abstract class BasicOpcode {
         int dst, left, right;   // operands
@@ -131,25 +132,69 @@ public class Thumb implements Cpu {
     }
     
     private class OpcodeLSL_RegImmed extends BasicOpcode implements Opcode {
-       
         @Override
         public void execute() {
+            int rd = dst;
+            int rs = left;
+            int immed = right;
+            int rsValue = getRegister(rs);
+            int rdValue = rsValue << immed;
+            setRegister(rd, rdValue);
+            setZeroFlag(rdValue == 0);
+            setSignedFlag(rdValue < 0);
+            // Carry unchanged when shifted amount is zero
+            if (immed != 0) {
+                setCarryFlag(((rsValue >>> (32 - immed)) & 1) == 1);
+            }
+            cycle.add(ArmCycle.S1);
         }
     }
 
     private class OpcodeLSR_RegImmed extends BasicOpcode implements Opcode {
-        
         @Override
         public void execute() {
-        
+            int rd = dst;
+            int rs = left;
+            int immed = right;
+            int rsValue = getRegister(rs);
+            // when shifted amount is 0, it means 32, ie, set rdValue to 0
+            int rdValue = 0;
+            if (immed != 0)
+                rdValue = rsValue >>> immed;
+            setRegister(rd, rdValue);
+            setZeroFlag(rdValue == 0);
+            setSignedFlag(rdValue < 0);
+            if (immed != 0) {
+                setCarryFlag(((rsValue >>> (immed - 1)) & 1) == 1);
+            }
+            else {  // Carry flag equals to the msb
+                setCarryFlag(rsValue < 0);  // msb means signed
+            }
+            cycle.add(ArmCycle.S1);
         }
     }
     
     private class OpcodeASR_RegImmed extends BasicOpcode implements Opcode {
-        
         @Override
         public void execute() {
-        
+            int rd = dst;
+            int rs = left;
+            int immed = right;
+            int rsValue = getRegister(rs);
+            // when shifted amount is 0, it means 32, ie, set rdValue to 0
+            int rdValue = 0;
+            if (immed != 0)
+                rdValue = rsValue >> immed;
+            setRegister(rd, rdValue);
+            setZeroFlag(rdValue == 0);
+            setSignedFlag(rdValue < 0);
+            if (immed != 0) {
+                setCarryFlag(((rsValue >>> (immed - 1)) & 1) == 1);
+            }
+            else {  // Carry flag equals to the msb
+                setCarryFlag(rsValue < 0);  // msb means signed
+            }
+            cycle.add(ArmCycle.S1);
         }
     }
     
@@ -1021,7 +1066,49 @@ public class Thumb implements Cpu {
     }
     
     @Override
+    public void setZeroFlag(boolean zf) {
+        if (zf)
+            register.setZero();
+        else
+            register.clearZero();
+    }
+    
+    @Override
+    public void setSignedFlag(boolean nf) {
+        if (nf)
+            register.setSigned();
+        else
+            register.clearSigned();
+    }
+    
+    @Override
+    public void setCarryFlag(boolean zf) {
+        if (zf)
+            register.setCarry();
+        else
+            register.clearCarry();
+    }
+    
+    @Override
+    public void setOverflowFlag(boolean zf) {
+        if (zf)
+            register.setOverflow();
+        else
+            register.clearOverflow();
+    }
+    
+    @Override
     public void setCpuMode(CpuMode newMode) {
         register.setCpuMode(newMode);
+    }
+    
+    @Override
+    public Cycle getCycle() {
+        return cycle;
+    }
+    
+    @Override
+    public void addCycle(Cycle cyc) {
+        cycle.add(cyc);
     }
 }
