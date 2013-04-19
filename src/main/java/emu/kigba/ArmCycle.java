@@ -8,15 +8,7 @@ package emu.kigba;
  *
  * @author ricky
  */
-public class ArmCycle implements Cycle {
-    public static ArmCycle subtract(ArmCycle left, ArmCycle right) {
-        return new ArmCycle(left.nc - right.nc,
-                            left.sc - right.sc,
-                            left.ic - right.ic,
-                            left.cc - right.cc
-        );
-    }
-    
+public class ArmCycle implements Cycle {    
     // some common Cycle objects
     public static ArmCycle S1 = new ArmCycle(0, 1, 0, 0);
     
