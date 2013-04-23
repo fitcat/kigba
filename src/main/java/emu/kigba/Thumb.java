@@ -67,6 +67,7 @@ public class Thumb implements Cpu {
     private MemoryManager memMgr;
     private Cycle cycle;
     private int instr;      // the current instruction
+    private int[] operands; // the operands of the current instruction
 
     private abstract class BasicOpcode {
         int dst, left, right;   // operands
@@ -87,7 +88,7 @@ public class Thumb implements Cpu {
             }
         }
         
-        public void execute() {
+        public void execute(Cpu cpu, int[] operands) {
             throw new UnsupportedOperationException("Method execute() must be defined.");
         }
         
@@ -133,600 +134,285 @@ public class Thumb implements Cpu {
     
     private class OpcodeLSL_RegImmed extends BasicOpcode implements Opcode {
         @Override
-        public void execute() {
-            int rd = dst;
-            int rs = left;
-            int immed = right;
-            int rsValue = getRegister(rs);
+        public void execute(Cpu cpu, int[] operands) {
+            int rd = operands[0];
+            int rs = operands[1];
+            int immed = operands[2];
+            int rsValue = cpu.getRegister(rs);
             int rdValue = rsValue << immed;
-            setRegister(rd, rdValue);
-            setZeroFlag(rdValue == 0);
-            setSignedFlag(rdValue < 0);
+            cpu.setRegister(rd, rdValue);
+            cpu.setZeroFlag(rdValue == 0);
+            cpu.setSignedFlag(rdValue < 0);
             // Carry unchanged when shifted amount is zero
             if (immed != 0) {
-                setCarryFlag(((rsValue >>> (32 - immed)) & 1) == 1);
+                cpu.setCarryFlag(((rsValue >>> (32 - immed)) & 1) == 1);
             }
-            cycle.add(ArmCycle.S1);
+            cpu.addCycle(ArmCycle.S1);
         }
     }
 
     private class OpcodeLSR_RegImmed extends BasicOpcode implements Opcode {
         @Override
-        public void execute() {
-            int rd = dst;
-            int rs = left;
-            int immed = right;
-            int rsValue = getRegister(rs);
+        public void execute(Cpu cpu, int[] operands) {
+            int rd = operands[0];
+            int rs = operands[1];
+            int immed = operands[2];
+            int rsValue = cpu.getRegister(rs);
             // when shifted amount is 0, it means 32, ie, set rdValue to 0
             int rdValue = 0;
             if (immed != 0)
                 rdValue = rsValue >>> immed;
-            setRegister(rd, rdValue);
-            setZeroFlag(rdValue == 0);
-            setSignedFlag(rdValue < 0);
+            cpu.setRegister(rd, rdValue);
+            cpu.setZeroFlag(rdValue == 0);
+            cpu.setSignedFlag(rdValue < 0);
             if (immed != 0) {
-                setCarryFlag(((rsValue >>> (immed - 1)) & 1) == 1);
+                cpu.setCarryFlag(((rsValue >>> (immed - 1)) & 1) == 1);
             }
             else {  // Carry flag equals to the msb
-                setCarryFlag(rsValue < 0);  // msb means signed
+                cpu.setCarryFlag(rsValue < 0);  // msb means signed
             }
-            cycle.add(ArmCycle.S1);
+            cpu.addCycle(ArmCycle.S1);
         }
     }
     
     private class OpcodeASR_RegImmed extends BasicOpcode implements Opcode {
         @Override
-        public void execute() {
-            int rd = dst;
-            int rs = left;
-            int immed = right;
-            int rsValue = getRegister(rs);
+        public void execute(Cpu cpu, int[] operands) {
+            int rd = operands[0];
+            int rs = operands[1];
+            int immed = operands[2];
+            int rsValue = cpu.getRegister(rs);
             // when shifted amount is 0, it means 32, ie, set rdValue to 0
             int rdValue = 0;
             if (immed != 0)
                 rdValue = rsValue >> immed;
-            setRegister(rd, rdValue);
-            setZeroFlag(rdValue == 0);
-            setSignedFlag(rdValue < 0);
+            cpu.setRegister(rd, rdValue);
+            cpu.setZeroFlag(rdValue == 0);
+            cpu.setSignedFlag(rdValue < 0);
             if (immed != 0) {
-                setCarryFlag(((rsValue >>> (immed - 1)) & 1) == 1);
+                cpu.setCarryFlag(((rsValue >>> (immed - 1)) & 1) == 1);
             }
             else {  // Carry flag equals to the msb
-                setCarryFlag(rsValue < 0);  // msb means signed
+                cpu.setCarryFlag(rsValue < 0);  // msb means signed
             }
-            cycle.add(ArmCycle.S1);
+            cpu.addCycle(ArmCycle.S1);
         }
     }
     
     private class OpcodeADD_RegReg extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeADD_RegImmed extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-            
-        }
     }
     
     private class OpcodeSUB_RegReg extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-        
-        }
     }
     
     private class OpcodeSUB_RegImmed extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeMOV_Immed extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeCMP_Immed extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeADD_Immed extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeSUB_Immed extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeAND_Reg extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeEOR_Reg extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeLSL_Reg extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeLSR_Reg extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeASR_Reg extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeADC_Reg extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeSBC_Reg extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeROR_Reg extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeTST_Reg extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeNEG_Reg extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeCMP_Reg extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeCMN_Reg extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeORR_Reg extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeMUL_Reg extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeBIC_Reg extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeMVN_Reg extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeADD_HiReg extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeCMP_HiReg extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeMOV_HiReg extends BasicOpcode implements Opcode {
-        
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeBX extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeLDR_PcRel extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeSTR_RegReg extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeSTRB_RegReg extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeLDR_RegReg extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeLDRB_RegReg extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeSTRH_RegReg extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeLDSB_RegReg extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeLDRH_RegReg extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeLDSH_RegReg extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeSTR_RegImmed extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeLDR_RegImmed extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeSTRB_RegImmed extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeLDRB_RegImmed extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeSTRH_RegImmed extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeLDRH_RegImmed extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeSTR_SpRel extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeLDR_SpRel extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeADD_PcRel extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeADD_SpRel extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeADD_SpInc extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeADD_SpDec extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodePUSH_Reg extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodePOP_Reg extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodePUSH_RegLr extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodePOP_RegPc extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeSTMIA extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeLDMIA extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeBEQ extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeBNE extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeBCS extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeBCC extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeBMI extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeBPL extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeBVS extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeBVC extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeBHI extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeBLS extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeBGE extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeBLT extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeBGT extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeBLE extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeSWI extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeB extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeBL extends BasicOpcode implements Opcode {
-        @Override
-        public void execute() {
-        
-        }
     }
 
     private class OpcodeUndefined extends BasicOpcode implements Opcode {
@@ -739,16 +425,13 @@ public class Thumb implements Cpu {
         public String getExtraName() {
             return "";
         }       
-                
-        @Override
-        public void execute() {
-        }
     }
     
     public Thumb(Arm7Register reg, MemoryManager mm, Cycle cycle) {
         register = reg;
         memMgr = mm;
         this.cycle = cycle;
+        operands = new int[3];
     }
     
     @Override
@@ -758,17 +441,16 @@ public class Thumb implements Cpu {
         setRegister(Arm7Register.PC, currentPc + 2);
     }
     
-    private Opcode decodeFormat_1() {
+    private Opcode decodeFormat_1(int[] operands) {
         int bit12_11 = (instr >>> 11) & 0x3;
         Opcode result = opcodeFormat[1][bit12_11];
-        int immed = (instr >>> 6) & 0b11111;
-        int src = (instr >>> 3) & 0b111;
-        int dst = instr & 0b111;
-        result.setOperand(dst, src, immed);
+        operands[0] = instr & 0b111;
+        operands[1] = (instr >>> 3) & 0b111;
+        operands[2] = (instr >>> 6) & 0b11111;
         return result;
     }
     
-    private Opcode decodeFormat_2() {
+    private Opcode decodeFormat_2(int[] operands) {
         int bit10_9 = (instr >>> 9) & 0b11;
         Opcode result = opcodeFormat[2][bit10_9];
         int dst = instr & 0b111;
@@ -778,14 +460,14 @@ public class Thumb implements Cpu {
         return result;
     }
     
-    private Opcode decodeFormat_1_2() {
+    private Opcode decodeFormat_1_2(int[] operands) {
         int bit12_11 = (instr >>> 11) & 3;
         if (bit12_11 != 0b11)
-            return decodeFormat_1();
-        return decodeFormat_2();
+            return decodeFormat_1(operands);
+        return decodeFormat_2(operands);
     }
     
-    private Opcode decodeFormat_3() {
+    private Opcode decodeFormat_3(int[] operands) {
         int bit12_11 = (instr >>> 11) & 3;
         Opcode result = opcodeFormat[3][bit12_11];
         int dst = (instr >>> 8) & 7;
@@ -794,7 +476,7 @@ public class Thumb implements Cpu {
         return result;
     }
     
-    private Opcode decodeFormat_4() {
+    private Opcode decodeFormat_4(int[] operands) {
         int bit9_6 = (instr >>> 6) & 0xF;
         Opcode result = opcodeFormat[4][bit9_6];
         int dst = instr & 7;
@@ -803,7 +485,7 @@ public class Thumb implements Cpu {
         return result;
     }
     
-    private Opcode decodeFormat_5() {
+    private Opcode decodeFormat_5(int[] operands) {
         int msb = (instr >>> 6) & 3;
         // Both MSBd and MSBs cannot be clear for ADD/CMP/MOV
         if (((instr >>> 8) & 3) != 3) { // ADD/CMP/MOV
@@ -822,7 +504,7 @@ public class Thumb implements Cpu {
         return result;
     }
     
-    private Opcode decodeFormat_6() {
+    private Opcode decodeFormat_6(int[] operands) {
         int dst = (instr >>> 8) & 7;
         int offset = (instr & 0xFF) << 2;   // step in 4
         Opcode result = opcodeFormat[6][0];
@@ -830,7 +512,7 @@ public class Thumb implements Cpu {
         return result;
     }
     
-    private Opcode decodeFormat_7() {
+    private Opcode decodeFormat_7(int[] operands) {
         int right = (instr >>> 6) & 7;
         int left = (instr >>> 3) & 7;
         int dst = instr & 7;
@@ -840,7 +522,7 @@ public class Thumb implements Cpu {
         return result;
     }
     
-    private Opcode decodeFormat_8() {
+    private Opcode decodeFormat_8(int[] operands) {
         int right = (instr >>> 6) & 7;
         int left = (instr >>> 3) & 7;
         int dst = instr & 7;
@@ -850,7 +532,7 @@ public class Thumb implements Cpu {
         return result;
     }
     
-    private Opcode decodeFormat_9() {
+    private Opcode decodeFormat_9(int[] operands) {
         int immed = (instr >>> 6) & 0x1F;
         int reg = (instr >>> 3) & 7;
         int dst = instr & 7;
@@ -861,7 +543,7 @@ public class Thumb implements Cpu {
         return result;
     }
     
-    private Opcode decodeFormat_10() {
+    private Opcode decodeFormat_10(int[] operands) {
         int immed = ((instr >>> 6) & 0x1F) << 1;    // in step of 2
         int reg = (instr >>> 3) & 7;
         int dst = instr & 7;
@@ -871,7 +553,7 @@ public class Thumb implements Cpu {
         return result;
     }
     
-    private Opcode decodeFormat_11() {
+    private Opcode decodeFormat_11(int[] operands) {
         int immed = (instr & 0xFF) << 2;    // in step of 4
         int dst = (instr >>>8) & 7;
         int bit11 = (instr >>> 11) & 1;
@@ -880,7 +562,7 @@ public class Thumb implements Cpu {
         return result;
     }
     
-    private Opcode decodeFormat_12() {
+    private Opcode decodeFormat_12(int[] operands) {
         int immed = (instr & 0xFF) << 2;    // in step of 4
         int dst = (instr >>> 8) & 7;
         int bit11 = (instr >>> 11) & 1;
@@ -889,7 +571,7 @@ public class Thumb implements Cpu {
         return result;
     }
     
-    private Opcode decodeFormat_13() {
+    private Opcode decodeFormat_13(int[] operands) {
         int bit_11_8 = (instr >>> 8) & 15;
         if (bit_11_8 != 0) return Undefined;
         int immed = (instr & 0x7F) << 2;    // in step of 4
@@ -899,7 +581,7 @@ public class Thumb implements Cpu {
         return result;
     }
     
-    private Opcode decodeFormat_14() {
+    private Opcode decodeFormat_14(int[] operands) {
         int bit_9 = (instr >>> 9) & 1;
         if (bit_9 != 0) return Undefined;
         int bit_11 = (instr >>> 11) & 1;
@@ -911,7 +593,7 @@ public class Thumb implements Cpu {
         return result;
     }
     
-    private Opcode decodeFormat_15() {
+    private Opcode decodeFormat_15(int[] operands) {
         int regList = (instr & 0xFF);
         int regBase = (instr >>> 8) & 7;
         int bit11 = (instr >>> 11) & 1;
@@ -920,7 +602,7 @@ public class Thumb implements Cpu {
         return result;
     }
     
-    private Opcode decodeFormat_16() {
+    private Opcode decodeFormat_16(int[] operands) {
         int cond = (instr >>> 8) & 0xF;
         if (cond == 0xE) return Undefined;
         int offset = instr & 0xFF;
@@ -929,12 +611,12 @@ public class Thumb implements Cpu {
         return result;
     }
     
-    private Opcode decodeFormat_17() {
+    private Opcode decodeFormat_17(int[] operands) {
         // the comment immediate field is ignored
         return opcodeFormat[17][0];
     }
     
-    private Opcode decodeFormat_18() {
+    private Opcode decodeFormat_18(int[] operands) {
         int bit_11 = (instr >>> 11) & 1;
         if (bit_11 != 0)
             return Undefined;
@@ -948,7 +630,7 @@ public class Thumb implements Cpu {
         return result;
     }
     
-    private Opcode decodeFormat_19() {
+    private Opcode decodeFormat_19(int[] operands) {
         int instrLo = instr;    // save the first instruction
         int lobit_11 = (instrLo >>> 11) & 1;
         // Bit 11 in first instruction must be clear
@@ -973,82 +655,87 @@ public class Thumb implements Cpu {
         return result;
     }
     
-    private Opcode decodeFormat_4_5() {
+    private Opcode decodeFormat_4_5(int[] operands) {
         if ((instr & (1 << 10)) == 0)
-            return decodeFormat_4();
-        return decodeFormat_5();
+            return decodeFormat_4(operands);
+        return decodeFormat_5(operands);
     }
     
-    private Opcode decodeFormat_4_to_6() {
+    private Opcode decodeFormat_4_to_6(int[] operands) {
         if ((instr & (1 << 11)) == 0)
-            return decodeFormat_4_5();
-        return decodeFormat_6();
+            return decodeFormat_4_5(operands);
+        return decodeFormat_6(operands);
     }
     
-    private Opcode decodeFormat_7_8() {
+    private Opcode decodeFormat_7_8(int[] operands) {
         if ((instr & (1 << 9)) == 0)
-            return decodeFormat_7();
-        return decodeFormat_8();
+            return decodeFormat_7(operands);
+        return decodeFormat_8(operands);
     }
     
-    private Opcode decodeFormat_4_to_8() {
+    private Opcode decodeFormat_4_to_8(int[] operands) {
         if ((instr & (1 << 12)) == 0)
-            return decodeFormat_4_to_6();
-        return decodeFormat_7_8();
+            return decodeFormat_4_to_6(operands);
+        return decodeFormat_7_8(operands);
     }
     
-    private Opcode decodeFormat_10_11() {
+    private Opcode decodeFormat_10_11(int[] operands) {
         if ((instr & (1 << 12)) == 0)
-            return decodeFormat_10();
-        return decodeFormat_11();
+            return decodeFormat_10(operands);
+        return decodeFormat_11(operands);
     }
     
-    private Opcode decodeFormat_12_14() {
+    private Opcode decodeFormat_12_14(int[] operands) {
         if ((instr & (1 << 12)) == 0)
-            return decodeFormat_12();
-        return decodeFormat_13_14();
+            return decodeFormat_12(operands);
+        return decodeFormat_13_14(operands);
     }
     
-    private Opcode decodeFormat_13_14() {
+    private Opcode decodeFormat_13_14(int[] operands) {
         if ((instr & (1 << 10)) == 0)
-            return decodeFormat_13();
-        return decodeFormat_14();
+            return decodeFormat_13(operands);
+        return decodeFormat_14(operands);
     }
     
-    private Opcode decodeFormat_15_to_17() {
+    private Opcode decodeFormat_15_to_17(int[] operands) {
         if ((instr & (1 << 12)) == 0)
-            return decodeFormat_15();
-        return decodeFormat_16_17();
+            return decodeFormat_15(operands);
+        return decodeFormat_16_17(operands);
     }
     
-    private Opcode decodeFormat_16_17() {
+    private Opcode decodeFormat_16_17(int[] operands) {
         int bit_8_11 = (instr >>> 8) & 0xF;
         if (bit_8_11 != 0b1111)
-            return decodeFormat_16();
-        return decodeFormat_17();
+            return decodeFormat_16(operands);
+        return decodeFormat_17(operands);
     }
     
-    private Opcode decodeFormat_18_19() {
+    private Opcode decodeFormat_18_19(int[] operands) {
         int bit_12 = (instr >>> 12) & 1;
         if (bit_12 == 0)
-            return decodeFormat_18();
-        return decodeFormat_19();
+            return decodeFormat_18(operands);
+        return decodeFormat_19(operands);
     }
     
     @Override
-    public Opcode decode() {
+    public Opcode decode(int[] operands) {
         int bit15_13 = (instr >> 13) & 7;
         switch (bit15_13) {
-            case 0: return decodeFormat_1_2();
-            case 1: return decodeFormat_3();
-            case 2: return decodeFormat_4_to_8();
-            case 3: return decodeFormat_9();
-            case 4: return decodeFormat_10_11();
-            case 5: return decodeFormat_12_14();
-            case 6: return decodeFormat_15_to_17();
+            case 0: return decodeFormat_1_2(operands);
+            case 1: return decodeFormat_3(operands);
+            case 2: return decodeFormat_4_to_8(operands);
+            case 3: return decodeFormat_9(operands);
+            case 4: return decodeFormat_10_11(operands);
+            case 5: return decodeFormat_12_14(operands);
+            case 6: return decodeFormat_15_to_17(operands);
             default:    // must be 7
-                return decodeFormat_18_19();
+                return decodeFormat_18_19(operands);
         }
+    }
+    
+    @Override
+    public int[] getOperands() {
+        return operands;
     }
     
     @Override

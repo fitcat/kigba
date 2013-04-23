@@ -99,13 +99,19 @@ public class ThumbTest {
     }   
     
     private void assertOpcodeWithOneOperand(Opcode op, String shortName, String extraName, int dst) {
-        assertOpcodeWithNoOperands(op, shortName, extraName);
+        assertOpcodeNames(op, shortName, extraName);
         assertEquals("Operand dst should match", dst, op.getOperandDst());
     }
     
-    private void assertOpcodeWithNoOperands(Opcode op, String shortName, String extraName) {
+    private void assertOpcodeNames(Opcode op, String shortName, String extraName) {
         assertEquals("Opcode short name should match", shortName, op.getShortName());
         assertEquals("Opcode extra name should match", extraName, op.getExtraName());
+    }
+    
+    private void assertThreeOperands(int dst, int left, int right, int[] actual) {
+        assertEquals("Operand dst should match", dst, actual[0]);
+        assertEquals("Operand left should match", left, actual[1]);
+        assertEquals("Operand right should match", right, actual[2]);
     }
     
     @Test
@@ -120,8 +126,9 @@ public class ThumbTest {
             int instr = (i << 11) | (immed << 6) | (src << 3) | dst;
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
-            Opcode op = cpu.decode();
-            assertOpcodeWithThreeOperands(op, name[i], "RegImmed", dst, src, immed);
+            Opcode op = cpu.decode(cpu.getOperands());
+            assertOpcodeNames(op, name[i], "RegImmed");
+            assertThreeOperands(dst, src, immed, cpu.getOperands());
         }
     }
 
@@ -140,7 +147,7 @@ public class ThumbTest {
             int instr = (0b00011 << 11) | (i << 9) | (right << 6) | (left << 3) | dst;
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
-            Opcode op = cpu.decode();
+            Opcode op = cpu.decode(cpu.getOperands());
             assertOpcodeWithThreeOperands(op, name[i], extraName[i >> 1], dst, left, right);
         }
     }
@@ -156,7 +163,7 @@ public class ThumbTest {
             int instr = (0b001 << 13) | (i << 11) | (dst << 8) | src;
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
-            Opcode op = cpu.decode();
+            Opcode op = cpu.decode(cpu.getOperands());
             assertOpcodeWithTwoOperands(op, name[i], "Immed", dst, src);
         }
     }
@@ -175,7 +182,7 @@ public class ThumbTest {
             int instr = (0b010000 << 10) | (i << 6) | (src << 3) | dst;
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
-            Opcode op = cpu.decode();
+            Opcode op = cpu.decode(cpu.getOperands());
             assertOpcodeWithTwoOperands(op, name[i], "Reg", dst, src);
         }
     }
@@ -187,8 +194,8 @@ public class ThumbTest {
             int instr = (0b010001 << 10) | (0b11 << 8) | (i << 6) | (src << 3) | dst;
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
-            Opcode op = cpu.decode();
-            assertOpcodeWithNoOperands(op, "BX", "");
+            Opcode op = cpu.decode(cpu.getOperands());
+            assertOpcodeNames(op, "BX", "");
             assertEquals("Src must match", src + (i << 3), op.getOperandSrc());
         }
     }
@@ -205,7 +212,7 @@ public class ThumbTest {
             int instr = (0b010001 << 10) | (i << 8) | (msb[i] << 6) | (src << 3) | dst;
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
-            Opcode op = cpu.decode();
+            Opcode op = cpu.decode(cpu.getOperands());
             assertOpcodeWithTwoOperands(op, name[i], "HiReg",
                     dst + ((msb[i] & 2) == 0 ? 0 : 8),
                     src + ((msb[i] & 1) == 0 ? 0 : 8));
@@ -224,16 +231,16 @@ public class ThumbTest {
             int instr = (0b010001 << 10) | (i << 8) | (msb << 6) | (src << 3) | dst;
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
-            Opcode op = cpu.decode();
-            assertOpcodeWithNoOperands(op, "???", "");
+            Opcode op = cpu.decode(cpu.getOperands());
+            assertOpcodeNames(op, "???", "");
         }
         // Invalid opcode format for BX: MSBd is set
         for (int i = 0b10; i <= 0b11; ++i) {
             int instr = (0b010001 << 10) | (0b11 << 8) | (i << 6) | (src << 3) | dst;
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
-            Opcode op = cpu.decode();
-            assertOpcodeWithNoOperands(op, "???", "");
+            Opcode op = cpu.decode(cpu.getOperands());
+            assertOpcodeNames(op, "???", "");
         }
     }
     
@@ -246,7 +253,7 @@ public class ThumbTest {
         int instr = (0b01001 << 11) | (dst << 8) | offset;
         when(mockedMM.fetchHalfWord(addrPc)).thenReturn(instr);
         cpu.fetch();
-        Opcode op = cpu.decode();
+        Opcode op = cpu.decode(cpu.getOperands());
         offset <<= 2;   // step in 4
         assertOpcodeWithTwoOperands(op, "LDR", "PcRel", dst, offset);
     }
@@ -263,7 +270,7 @@ public class ThumbTest {
             int instr = (0b0101 << 12) | (i << 10) | (right << 6) | (left << 3) | dst;
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
-            Opcode op = cpu.decode();
+            Opcode op = cpu.decode(cpu.getOperands());
             assertOpcodeWithThreeOperands(op, name[i], "RegReg", dst, left, right);
         }
     }
@@ -280,7 +287,7 @@ public class ThumbTest {
             int instr = (0b0101 << 12) | (i << 10) | 1 << 9 | (right << 6) | (left << 3) | dst;
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
-            Opcode op = cpu.decode();
+            Opcode op = cpu.decode(cpu.getOperands());
             assertOpcodeWithThreeOperands(op, name[i], "RegReg", dst, left, right);
         }
     }
@@ -297,7 +304,7 @@ public class ThumbTest {
             int instr = (0b011 << 13) | (i << 11) | (immed << 6) | (reg << 3) | dst;
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
-            Opcode op = cpu.decode();
+            Opcode op = cpu.decode(cpu.getOperands());
             immed <<= (i < 2 ? 2 : 0);  // step in 4 for WORD accesses
             assertOpcodeWithThreeOperands(op, name[i], "RegImmed", dst, reg, immed);
         }
@@ -315,7 +322,7 @@ public class ThumbTest {
             int instr = (0b1000 << 12) | (i << 11) | (immed << 6) | (reg << 3) | dst;
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
-            Opcode op = cpu.decode();
+            Opcode op = cpu.decode(cpu.getOperands());
             immed <<= 1;    // step in 2 for HALFWORD accesses
             assertOpcodeWithThreeOperands(op, name[i], "RegImmed", dst, reg, immed);
         }
@@ -332,7 +339,7 @@ public class ThumbTest {
             int instr = (0b1001 << 12) | (i << 11) | (dst << 8) | immed;
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
-            Opcode op = cpu.decode();
+            Opcode op = cpu.decode(cpu.getOperands());
             immed <<= 2;        // step in 4 for WORD accesses
             assertOpcodeWithTwoOperands(op, name[i], "SpRel", dst, immed);
         }
@@ -352,7 +359,7 @@ public class ThumbTest {
             int instr = (0b1010 << 12) | (i << 11) | (dst << 8) | immed;
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
-            Opcode op = cpu.decode();
+            Opcode op = cpu.decode(cpu.getOperands());
             immed <<= 2;        // step in 4
             assertOpcodeWithTwoOperands(op, name[i], extraName[i], dst, immed);
         }
@@ -371,7 +378,7 @@ public class ThumbTest {
             int instr = (0b10110000 << 8) | (i << 7) | immed;
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
-            Opcode op = cpu.decode();
+            Opcode op = cpu.decode(cpu.getOperands());
             immed <<= 2;        // step in 4
             assertOpcodeWithOneOperand(op, name[i], extraName[i], immed);
         }
@@ -388,8 +395,8 @@ public class ThumbTest {
             int instr = (0b1011 << 12) | bit_11_8 | (signed << 7) | immed;
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
-            Opcode op = cpu.decode();
-            assertOpcodeWithNoOperands(op, "???", "");
+            Opcode op = cpu.decode(cpu.getOperands());
+            assertOpcodeNames(op, "???", "");
         }
     }
 
@@ -408,7 +415,7 @@ public class ThumbTest {
             int instr = (0b1011 << 12) | (bit_11 << 11) | (0b10 << 9) | (bit_8 << 8) | regList;
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
-            Opcode op = cpu.decode();
+            Opcode op = cpu.decode(cpu.getOperands());
             assertOpcodeWithOneOperand(op, name[i], extraName[i], regList);
         }
     }
@@ -423,8 +430,8 @@ public class ThumbTest {
             int instr = (0b1011 << 12) | (bit_11 << 11) | (0b11 << 9) | (bit_8 << 8) | regList;
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
-            Opcode op = cpu.decode();
-            assertOpcodeWithNoOperands(op, "???", "");
+            Opcode op = cpu.decode(cpu.getOperands());
+            assertOpcodeNames(op, "???", "");
         }
     }
 
@@ -439,7 +446,7 @@ public class ThumbTest {
             int instr = (0b1100 << 12) | (i << 11) | (regBase << 8) | regList;
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
-            Opcode op = cpu.decode();
+            Opcode op = cpu.decode(cpu.getOperands());
             assertOpcodeWithTwoOperands(op, name[i], "", regBase, regList);
         }
     }
@@ -457,7 +464,7 @@ public class ThumbTest {
             int instr = (0b1101 << 12) | (i << 8) | offset;
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
-            Opcode op = cpu.decode();
+            Opcode op = cpu.decode(cpu.getOperands());
             assertOpcodeWithOneOperand(op, name[i], "", offset);
         }
     }
@@ -469,8 +476,8 @@ public class ThumbTest {
         int instr = (0b1101 << 12) | (14 << 8) | offset;
         when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
         cpu.fetch();
-        Opcode op = cpu.decode();
-        assertOpcodeWithNoOperands(op, "???", "");
+        Opcode op = cpu.decode(cpu.getOperands());
+        assertOpcodeNames(op, "???", "");
     }
 
     @Test
@@ -479,8 +486,8 @@ public class ThumbTest {
         int instr = (0b11011111 << 8) | swi;
         when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
         cpu.fetch();
-        Opcode op = cpu.decode();
-        assertOpcodeWithNoOperands(op, "SWI", "");
+        Opcode op = cpu.decode(cpu.getOperands());
+        assertOpcodeNames(op, "SWI", "");
     }
 
     @Test
@@ -496,7 +503,7 @@ public class ThumbTest {
             int instr = (0b11100 << 11) | target;
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
-            Opcode op = cpu.decode();
+            Opcode op = cpu.decode(cpu.getOperands());
             assertOpcodeWithOneOperand(op, "B", "", expect[i]);
         }
     }
@@ -507,8 +514,8 @@ public class ThumbTest {
         int instr = (0b1110 << 12) | (1 << 11) | rand.nextInt(2048);
         when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
         cpu.fetch();
-        Opcode op = cpu.decode();
-        assertOpcodeWithNoOperands(op, "???", "");
+        Opcode op = cpu.decode(cpu.getOperands());
+        assertOpcodeNames(op, "???", "");
     }
 
     @Test
@@ -527,7 +534,7 @@ public class ThumbTest {
             int instrHi = (0b11111 << 11) | targetHi;
             when(mockedMM.fetchHalfWord(0)).thenReturn(instrLo).thenReturn(instrHi);
             cpu.fetch();
-            Opcode op = cpu.decode();
+            Opcode op = cpu.decode(cpu.getOperands());
             assertOpcodeWithOneOperand(op, "BL", "", expect[i]);
         }
     }
@@ -540,8 +547,8 @@ public class ThumbTest {
         int instrHi = (0b11111 << 11) | rand.nextInt(0x800);
         when(mockedMM.fetchHalfWord(0)).thenReturn(instrLo).thenReturn(instrHi);
         cpu.fetch();
-        Opcode op = cpu.decode();
-        assertOpcodeWithNoOperands(op, "???", "");
+        Opcode op = cpu.decode(cpu.getOperands());
+        assertOpcodeNames(op, "???", "");
     }
 
     @Test
@@ -552,8 +559,8 @@ public class ThumbTest {
         int instrHi = (0b11110 << 11) | rand.nextInt(0x800);
         when(mockedMM.fetchHalfWord(0)).thenReturn(instrLo).thenReturn(instrHi);
         cpu.fetch();
-        Opcode op = cpu.decode();
-        assertOpcodeWithNoOperands(op, "???", "");
+        Opcode op = cpu.decode(cpu.getOperands());
+        assertOpcodeNames(op, "???", "");
     }
     
     private ThumbTest verifyZero(boolean zf) {
@@ -609,14 +616,14 @@ public class ThumbTest {
         int instr = (immed << 6) | (rs << 3) | rd;
         when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
         cpu.fetch();
-        Opcode op = cpu.decode();
+        Opcode op = cpu.decode(cpu.getOperands());
 
         // prepare the value for Rs
         int rsValue = rand.nextInt();
         when(mockedRegister.get(rs)).thenReturn(rsValue);
         
         // execute
-        op.execute();
+        op.execute(cpu, cpu.getOperands());
         
         // verify the shifted result
         int expect = rsValue << immed;
@@ -643,14 +650,14 @@ public class ThumbTest {
         int instr = (immed << 6) | (rs << 3) | rd;
         when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
         cpu.fetch();
-        Opcode op = cpu.decode();
+        Opcode op = cpu.decode(cpu.getOperands());
 
         // prepare the value for Rs
         int rsValue = rand.nextInt();
         when(mockedRegister.get(rs)).thenReturn(rsValue);
         
         // execute
-        op.execute();
+        op.execute(cpu, cpu.getOperands());
         
         // verify the shifted result
         int expect = rsValue << immed;
@@ -674,14 +681,14 @@ public class ThumbTest {
         int instr = (1 << 11) | (immed << 6) | (rs << 3) | rd;
         when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
         cpu.fetch();
-        Opcode op = cpu.decode();
+        Opcode op = cpu.decode(cpu.getOperands());
 
         // prepare the value for Rs
         int rsValue = rand.nextInt();
         when(mockedRegister.get(rs)).thenReturn(rsValue);
         
         // execute
-        op.execute();
+        op.execute(cpu, cpu.getOperands());
         
         // verify the shifted result
         int expect = rsValue >>> immed;
@@ -708,14 +715,14 @@ public class ThumbTest {
         int instr = (1 << 11) | (immed << 6) | (rs << 3) | rd;
         when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
         cpu.fetch();
-        Opcode op = cpu.decode();
+        Opcode op = cpu.decode(cpu.getOperands());
 
         // prepare the value for Rs
         int rsValue = rand.nextInt();
         when(mockedRegister.get(rs)).thenReturn(rsValue);
         
         // execute
-        op.execute();
+        op.execute(cpu, cpu.getOperands());
         
         // verify the shifted result
         int expect = 0; // immed is zero means 32 => set to 0
@@ -742,14 +749,14 @@ public class ThumbTest {
         int instr = (1 << 12) | (immed << 6) | (rs << 3) | rd;
         when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
         cpu.fetch();
-        Opcode op = cpu.decode();
+        Opcode op = cpu.decode(cpu.getOperands());
 
         // prepare the value for Rs
         int rsValue = rand.nextInt();
         when(mockedRegister.get(rs)).thenReturn(rsValue);
         
         // execute
-        op.execute();
+        op.execute(cpu, cpu.getOperands());
         
         // verify the shifted result
         int expect = rsValue >> immed;
@@ -776,14 +783,14 @@ public class ThumbTest {
         int instr = (1 << 12) | (immed << 6) | (rs << 3) | rd;
         when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
         cpu.fetch();
-        Opcode op = cpu.decode();
+        Opcode op = cpu.decode(cpu.getOperands());
 
         // prepare the value for Rs
         int rsValue = rand.nextInt();
         when(mockedRegister.get(rs)).thenReturn(rsValue);
         
         // execute
-        op.execute();
+        op.execute(cpu, cpu.getOperands());
         
         // verify the shifted result
         int expect = 0; // immed is zero means 32 => set to 0

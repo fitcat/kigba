@@ -9,7 +9,7 @@ package emu.kigba;
  * @author ricky
  */
 public interface Opcode {
-    void execute();
+    void execute(Cpu cpu, int[] operands);
     void setOperand(int dst, int left, int right);
     void setOperand(int dst, int src);
     void setOperand(int dst);

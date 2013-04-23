@@ -10,7 +10,8 @@ package emu.kigba;
  */
 public interface Cpu {
     void fetch();
-    Opcode decode();
+    Opcode decode(int[] operands);
+    int[] getOperands();
     int getInstr();
     int getRegister(int which);
     void setRegister(int which, int value);
