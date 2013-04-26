@@ -23,6 +23,7 @@ public class ThumbTest {
     ArmCycle mockedCycle;
     Cpu cpu;
     java.util.Random rand;
+    int[] operands;
     
     public ThumbTest() {
     }
@@ -42,6 +43,7 @@ public class ThumbTest {
         mockedCycle = mock(ArmCycle.class);
         cpu = new Thumb(mockedRegister, mockedMM, mockedCycle);
         rand = new java.util.Random();
+        operands = new int[3];
     }
     
     @After
@@ -609,201 +611,145 @@ public class ThumbTest {
     
     @Test
     public void executeFormat_1_LSL_withNonZeroImmed() {
-        // prepare the instruction
-        int rd = rand.nextInt(8);
-        int rs = rand.nextInt(8);
-        int immed = rand.nextInt(31) + 1;
-        int instr = (immed << 6) | (rs << 3) | rd;
-        when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
-        cpu.fetch();
-        Opcode op = cpu.decode(cpu.getOperands());
-
+        // prepare the operands
+        operands[0] = rand.nextInt(8);          // Rd
+        operands[1] = rand.nextInt(8);          // Rs
+        operands[2] = rand.nextInt(31) + 1;     // Immed (non-zero)
         // prepare the value for Rs
         int rsValue = rand.nextInt();
-        when(mockedRegister.get(rs)).thenReturn(rsValue);
-        
-        // execute
-        op.execute(cpu, cpu.getOperands());
-        
+        when(mockedRegister.get(operands[1])).thenReturn(rsValue);
+        // execute SUT
+        ThumbOpcode.LSL_RegImmed.execute(cpu, operands);
         // verify the shifted result
-        int expect = rsValue << immed;
-        verify(mockedRegister).set(rd, expect);
-        
+        int expect = rsValue << operands[2];
+        verify(mockedRegister).set(operands[0], expect);
         // verify the flags
         boolean newZf = (expect == 0);
         boolean newNf = (expect < 0);
         boolean newCf;
-        int carry = (rsValue >>> (32 - immed)) & 1;
+        int carry = (rsValue >>> (32 - operands[2])) & 1;
         newCf = (carry == 1);
         verifyZero(newZf).verifySigned(newNf).verifyCarry(newCf).unchangeOverflow();
-        
         // verify cycles taken
         verify(mockedCycle).add(ArmCycle.S1);
     }
 
     @Test
     public void executeFormat_1_LSL_withZeroImmed() {
-        // prepare the instruction
-        int rd = rand.nextInt(8);
-        int rs = rand.nextInt(8);
-        int immed = 0;
-        int instr = (immed << 6) | (rs << 3) | rd;
-        when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
-        cpu.fetch();
-        Opcode op = cpu.decode(cpu.getOperands());
-
+        // prepare the operands
+        operands[0] = rand.nextInt(8);   // Rd
+        operands[1] = rand.nextInt(8);   // Rs
+        operands[2] = 0;                // Immed = 0
         // prepare the value for Rs
         int rsValue = rand.nextInt();
-        when(mockedRegister.get(rs)).thenReturn(rsValue);
-        
-        // execute
-        op.execute(cpu, cpu.getOperands());
-        
+        when(mockedRegister.get(operands[1])).thenReturn(rsValue);
+        // execute SUT
+        ThumbOpcode.LSL_RegImmed.execute(cpu, operands);
         // verify the shifted result
-        int expect = rsValue << immed;
-        verify(mockedRegister).set(rd, expect);
-        
+        int expect = rsValue << operands[2];
+        verify(mockedRegister).set(operands[0], expect);
         // verify the flags
         boolean newZf = (expect == 0);
         boolean newNf = (expect < 0);
         verifyZero(newZf).verifySigned(newNf).unchangeCarry().unchangeOverflow();
-        
         // verify cycles taken
         verify(mockedCycle).add(ArmCycle.S1);
     }
     
     @Test
     public void executeFormat_1_LSR_withNonZeroImmed() {
-        // prepare the instruction
-        int rd = rand.nextInt(8);
-        int rs = rand.nextInt(8);
-        int immed = rand.nextInt(31) + 1;
-        int instr = (1 << 11) | (immed << 6) | (rs << 3) | rd;
-        when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
-        cpu.fetch();
-        Opcode op = cpu.decode(cpu.getOperands());
-
+        // prepare the operands
+        operands[0] = rand.nextInt(8);          // Rd
+        operands[1] = rand.nextInt(8);          // Rs
+        operands[2] = rand.nextInt(31) + 1;     // Immed (non-zero)
         // prepare the value for Rs
         int rsValue = rand.nextInt();
-        when(mockedRegister.get(rs)).thenReturn(rsValue);
-        
-        // execute
-        op.execute(cpu, cpu.getOperands());
-        
+        when(mockedRegister.get(operands[1])).thenReturn(rsValue);
+        // execute SUT
+        ThumbOpcode.LSR_RegImmed.execute(cpu, operands);
         // verify the shifted result
-        int expect = rsValue >>> immed;
-        verify(mockedRegister).set(rd, expect);
-        
+        int expect = rsValue >>> operands[2];
+        verify(mockedRegister).set(operands[0], expect);
         // verify the flags
         boolean newZf = (expect == 0);
         boolean newNf = (expect < 0);
         boolean newCf;
-        int carry = (rsValue >>> (immed - 1)) & 1;
+        int carry = (rsValue >>> (operands[2] - 1)) & 1;
         newCf = (carry == 1);
         verifyZero(newZf).verifySigned(newNf).verifyCarry(newCf).unchangeOverflow();
-        
         // verify cycles taken
         verify(mockedCycle).add(ArmCycle.S1);
     }
 
     @Test
     public void executeFormat_1_LSR_withZeroImmed() {
-        // prepare the instruction
-        int rd = rand.nextInt(8);
-        int rs = rand.nextInt(8);
-        int immed = 0;
-        int instr = (1 << 11) | (immed << 6) | (rs << 3) | rd;
-        when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
-        cpu.fetch();
-        Opcode op = cpu.decode(cpu.getOperands());
-
+        // prepare the operands
+        operands[0] = rand.nextInt(8);   // Rd
+        operands[1] = rand.nextInt(8);   // Rs
+        operands[2] = 0;                // Immed = 0
         // prepare the value for Rs
         int rsValue = rand.nextInt();
-        when(mockedRegister.get(rs)).thenReturn(rsValue);
-        
-        // execute
-        op.execute(cpu, cpu.getOperands());
-        
+        when(mockedRegister.get(operands[1])).thenReturn(rsValue);
+        // execute SUT
+        ThumbOpcode.LSR_RegImmed.execute(cpu, operands);
         // verify the shifted result
         int expect = 0; // immed is zero means 32 => set to 0
-        verify(mockedRegister).set(rd, expect);
-        
+        verify(mockedRegister).set(operands[0], expect);
         // verify the flags
         boolean newZf = (expect == 0);
         boolean newNf = (expect < 0);
         boolean newCf;
-        int carry = (rsValue >>> (immed - 1)) & 1;
+        int carry = (rsValue >>> (operands[2] - 1)) & 1;
         newCf = (carry == 1);
         verifyZero(newZf).verifySigned(newNf).verifyCarry(newCf).unchangeOverflow();
-        
         // verify cycles taken
         verify(mockedCycle).add(ArmCycle.S1);
     }
     
     @Test
     public void executeFormat_1_ASR_withNonZeroImmed() {
-        // prepare the instruction
-        int rd = rand.nextInt(8);
-        int rs = rand.nextInt(8);
-        int immed = rand.nextInt(31) + 1;
-        int instr = (1 << 12) | (immed << 6) | (rs << 3) | rd;
-        when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
-        cpu.fetch();
-        Opcode op = cpu.decode(cpu.getOperands());
-
+        // prepare the operands
+        operands[0] = rand.nextInt(8);          // Rd
+        operands[1] = rand.nextInt(8);          // Rs
+        operands[2] = rand.nextInt(31) + 1;     // Immed (non-zero)
         // prepare the value for Rs
         int rsValue = rand.nextInt();
-        when(mockedRegister.get(rs)).thenReturn(rsValue);
-        
-        // execute
-        op.execute(cpu, cpu.getOperands());
-        
+        when(mockedRegister.get(operands[1])).thenReturn(rsValue);
+        // execute SUT
+        ThumbOpcode.ASR_RegImmed.execute(cpu, operands);
         // verify the shifted result
-        int expect = rsValue >> immed;
-        verify(mockedRegister).set(rd, expect);
-        
+        int expect = rsValue >> operands[2];
+        verify(mockedRegister).set(operands[0], expect);
         // verify the flags
         boolean newZf = (expect == 0);
         boolean newNf = (expect < 0);
         boolean newCf;
-        int carry = (rsValue >>> (immed - 1)) & 1;
+        int carry = (rsValue >>> (operands[2] - 1)) & 1;
         newCf = (carry == 1);
         verifyZero(newZf).verifySigned(newNf).verifyCarry(newCf).unchangeOverflow();
-        
         // verify cycles taken
         verify(mockedCycle).add(ArmCycle.S1);
     }
 
     @Test
     public void executeFormat_1_ASR_withZeroImmed() {
-        // prepare the instruction
-        int rd = rand.nextInt(8);
-        int rs = rand.nextInt(8);
-        int immed = 0;
-        int instr = (1 << 12) | (immed << 6) | (rs << 3) | rd;
-        when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
-        cpu.fetch();
-        Opcode op = cpu.decode(cpu.getOperands());
-
+        // prepare the operands
+        operands[0] = rand.nextInt(8);          // Rd
+        operands[1] = rand.nextInt(8);          // Rs
+        operands[2] = 0;                        // Immed = 0
         // prepare the value for Rs
         int rsValue = rand.nextInt();
-        when(mockedRegister.get(rs)).thenReturn(rsValue);
-        
-        // execute
-        op.execute(cpu, cpu.getOperands());
-        
+        when(mockedRegister.get(operands[1])).thenReturn(rsValue);
+        // execute SUT
+        ThumbOpcode.ASR_RegImmed.execute(cpu, operands);
         // verify the shifted result
         int expect = 0; // immed is zero means 32 => set to 0
-        verify(mockedRegister).set(rd, expect);
-        
+        verify(mockedRegister).set(operands[0], expect);
         // verify the flags
         boolean newZf = (expect == 0);
         boolean newNf = (expect < 0);
-        boolean newCf;
-        int carry = (rsValue >> (immed - 1)) & 1;
-        newCf = (carry == 1);
+        boolean newCf = (expect < 0);
         verifyZero(newZf).verifySigned(newNf).verifyCarry(newCf).unchangeOverflow();
-        
         // verify cycles taken
         verify(mockedCycle).add(ArmCycle.S1);
     }
