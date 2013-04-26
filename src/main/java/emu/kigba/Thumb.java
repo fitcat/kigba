@@ -12,7 +12,8 @@ public class Thumb implements Cpu {
     final Opcode Undefined    = new OpcodeUndefined();
     final Opcode [][] opcodeFormat = {
         /*  0 */ {Undefined}, 
-        /*  1 */ {new OpcodeLSL_RegImmed(), new OpcodeLSR_RegImmed(), new OpcodeASR_RegImmed()},
+//        /*  1 */ {new OpcodeLSL_RegImmed(), new OpcodeLSR_RegImmed(), new OpcodeASR_RegImmed()},
+        /*  1 */ {ThumbOpcode.LSL_RegImmed, ThumbOpcode.LSR_RegImmed, ThumbOpcode.ASR_RegImmed},
         /*  2 */ {new OpcodeADD_RegReg(), new OpcodeSUB_RegReg(),
                   new OpcodeADD_RegImmed(), new OpcodeSUB_RegImmed(),
                  },
