@@ -118,10 +118,7 @@ public class ThumbTest {
     
     @Test
     public void decodeFormat_1() {
-        final String[] name = {
-            "LSL", "LSR", "ASR",
-        };
-        for (int i = 0; i < name.length; ++i) {
+        for (int i = 0; i < ThumbOpcode.formatTab[1].length; ++i) {
             int dst = rand.nextInt(8);
             int src = rand.nextInt(8);
             int immed = rand.nextInt(32);
@@ -129,20 +126,14 @@ public class ThumbTest {
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
             Opcode op = cpu.decode(cpu.getOperands());
-            assertOpcodeNames(op, name[i], "RegImmed");
+            assertEquals("Opcode should match", ThumbOpcode.formatTab[1][i], op);
             assertThreeOperands(dst, src, immed, cpu.getOperands());
         }
     }
 
     @Test
     public void decodeFormat_2() {
-        final String[] name = {
-            "ADD", "SUB", "ADD", "SUB",
-        };
-        final String[] extraName = {
-            "RegReg", "RegImmed",
-        };
-        for (int i = 0; i < name.length; ++i) {
+        for (int i = 0; i < ThumbOpcode.formatTab[2].length; ++i) {
             int dst = rand.nextInt(8);
             int left = rand.nextInt(8);
             int right = rand.nextInt(8);
@@ -150,7 +141,8 @@ public class ThumbTest {
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
             Opcode op = cpu.decode(cpu.getOperands());
-            assertOpcodeWithThreeOperands(op, name[i], extraName[i >> 1], dst, left, right);
+            assertEquals("Opcode should match", ThumbOpcode.formatTab[2][i], op);
+            assertThreeOperands(dst, left, right, cpu.getOperands());
         }
     }
 
@@ -619,7 +611,7 @@ public class ThumbTest {
         int rsValue = rand.nextInt();
         when(mockedRegister.get(operands[1])).thenReturn(rsValue);
         // execute SUT
-        ThumbOpcode.LSL_RegImmed.execute(cpu, operands);
+        ThumbOpcode.LSL_REG_IMMED.execute(cpu, operands);
         // verify the shifted result
         int expect = rsValue << operands[2];
         verify(mockedRegister).set(operands[0], expect);
@@ -644,7 +636,7 @@ public class ThumbTest {
         int rsValue = rand.nextInt();
         when(mockedRegister.get(operands[1])).thenReturn(rsValue);
         // execute SUT
-        ThumbOpcode.LSL_RegImmed.execute(cpu, operands);
+        ThumbOpcode.LSL_REG_IMMED.execute(cpu, operands);
         // verify the shifted result
         int expect = rsValue << operands[2];
         verify(mockedRegister).set(operands[0], expect);
@@ -666,7 +658,7 @@ public class ThumbTest {
         int rsValue = rand.nextInt();
         when(mockedRegister.get(operands[1])).thenReturn(rsValue);
         // execute SUT
-        ThumbOpcode.LSR_RegImmed.execute(cpu, operands);
+        ThumbOpcode.LSR_REG_IMMED.execute(cpu, operands);
         // verify the shifted result
         int expect = rsValue >>> operands[2];
         verify(mockedRegister).set(operands[0], expect);
@@ -691,7 +683,7 @@ public class ThumbTest {
         int rsValue = rand.nextInt();
         when(mockedRegister.get(operands[1])).thenReturn(rsValue);
         // execute SUT
-        ThumbOpcode.LSR_RegImmed.execute(cpu, operands);
+        ThumbOpcode.LSR_REG_IMMED.execute(cpu, operands);
         // verify the shifted result
         int expect = 0; // immed is zero means 32 => set to 0
         verify(mockedRegister).set(operands[0], expect);
@@ -716,7 +708,7 @@ public class ThumbTest {
         int rsValue = rand.nextInt();
         when(mockedRegister.get(operands[1])).thenReturn(rsValue);
         // execute SUT
-        ThumbOpcode.ASR_RegImmed.execute(cpu, operands);
+        ThumbOpcode.ASR_REG_IMMED.execute(cpu, operands);
         // verify the shifted result
         int expect = rsValue >> operands[2];
         verify(mockedRegister).set(operands[0], expect);
@@ -741,14 +733,14 @@ public class ThumbTest {
         int rsValue = rand.nextInt();
         when(mockedRegister.get(operands[1])).thenReturn(rsValue);
         // execute SUT
-        ThumbOpcode.ASR_RegImmed.execute(cpu, operands);
+        ThumbOpcode.ASR_REG_IMMED.execute(cpu, operands);
         // verify the shifted result
         int expect = 0; // immed is zero means 32 => set to 0
         verify(mockedRegister).set(operands[0], expect);
         // verify the flags
         boolean newZf = (expect == 0);
         boolean newNf = (expect < 0);
-        boolean newCf = (expect < 0);
+        boolean newCf = (rsValue < 0);
         verifyZero(newZf).verifySigned(newNf).verifyCarry(newCf).unchangeOverflow();
         // verify cycles taken
         verify(mockedCycle).add(ArmCycle.S1);

@@ -22,7 +22,13 @@ public interface Opcode {
 }
 
 enum ThumbOpcode implements Opcode {
-    LSL_RegImmed("LSL", "RegImmed") {
+    UNDEFINED("???", "") {
+        @Override
+        public void execute(Cpu cpu, int[] operands) {
+            // TODO
+        }
+    },
+    LSL_REG_IMMED("LSL", "RegImmed") {
         @Override
         public void execute(Cpu cpu, int[] operands) {
             int rd = operands[0];
@@ -40,7 +46,7 @@ enum ThumbOpcode implements Opcode {
             cpu.addCycle(ArmCycle.S1);
         }
     },
-    LSR_RegImmed("LSR", "RegImmed") {
+    LSR_REG_IMMED("LSR", "RegImmed") {
         @Override
         public void execute(Cpu cpu, int[] operands) {
             int rd = operands[0];
@@ -63,7 +69,7 @@ enum ThumbOpcode implements Opcode {
             cpu.addCycle(ArmCycle.S1);
         }
     },
-    ASR_RegImmed("ASR", "RegImmed") {
+    ASR_REG_IMMED("ASR", "RegImmed") {
         @Override
         public void execute(Cpu cpu, int[] operands) {
             int rd = operands[0];
@@ -85,8 +91,46 @@ enum ThumbOpcode implements Opcode {
             }
             cpu.addCycle(ArmCycle.S1);
         }
-    };
+    },
+    ADD_REG_REG("ADD", "RegReg") {
+        @Override
+        public void execute(Cpu cpu, int[] operands) {
+            
+        }
+    },
+    SUB_REG_REG("ADD", "RegReg") {
+        @Override
+        public void execute(Cpu cpu, int[] operands) {
+            
+        }
+    },
+    ADD_REG_IMMED("ADD", "RegImmed") {
+        @Override
+        public void execute(Cpu cpu, int[] operands) {
+            
+        }
+    },
+    SUB_REG_IMMED("SUB", "RegImmed") {
+        @Override
+        public void execute(Cpu cpu, int[] operands) {
+            
+        }
+    }
+    ;
     
+    public static final int FORMAT_SIZE = 20;  // include UNDEFINED
+    public static final Opcode[][] formatTab;
+    
+    static {
+        formatTab = new Opcode[FORMAT_SIZE][];
+        formatTab[0] = new Opcode[] { UNDEFINED };
+        formatTab[1] = new Opcode[] {
+            LSL_REG_IMMED, LSR_REG_IMMED, ASR_REG_IMMED
+        };
+        formatTab[2] = new Opcode[] {
+            ADD_REG_REG, SUB_REG_REG, ADD_REG_IMMED, SUB_REG_IMMED
+        };
+    }
     
     private String shortName;
     private String extraName;
@@ -96,6 +140,7 @@ enum ThumbOpcode implements Opcode {
         extraName = en;
     }
     
+    @Override
     public abstract void execute(Cpu cpu, int[] operands);
     
     @Override

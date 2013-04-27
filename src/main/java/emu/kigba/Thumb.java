@@ -12,10 +12,9 @@ public class Thumb implements Cpu {
     final Opcode Undefined    = new OpcodeUndefined();
     final Opcode [][] opcodeFormat = {
         /*  0 */ {Undefined}, 
-//        /*  1 */ {new OpcodeLSL_RegImmed(), new OpcodeLSR_RegImmed(), new OpcodeASR_RegImmed()},
-        /*  1 */ {ThumbOpcode.LSL_RegImmed, ThumbOpcode.LSR_RegImmed, ThumbOpcode.ASR_RegImmed},
-        /*  2 */ {new OpcodeADD_RegReg(), new OpcodeSUB_RegReg(),
-                  new OpcodeADD_RegImmed(), new OpcodeSUB_RegImmed(),
+        /*  1 */ {ThumbOpcode.LSL_REG_IMMED, ThumbOpcode.LSR_REG_IMMED, ThumbOpcode.ASR_REG_IMMED},
+        /*  2 */ {ThumbOpcode.ADD_REG_REG, ThumbOpcode.SUB_REG_REG,
+                  ThumbOpcode.ADD_REG_IMMED, ThumbOpcode.SUB_REG_IMMED
                  },
         /*  3 */ {new OpcodeMOV_Immed(), new OpcodeCMP_Immed(),
                   new OpcodeADD_Immed(), new OpcodeSUB_Immed(),
@@ -377,21 +376,18 @@ public class Thumb implements Cpu {
     
     private Opcode decodeFormat_1(int[] operands) {
         int bit12_11 = (instr >>> 11) & 0x3;
-        Opcode result = opcodeFormat[1][bit12_11];
         operands[0] = instr & 0b111;
         operands[1] = (instr >>> 3) & 0b111;
         operands[2] = (instr >>> 6) & 0b11111;
-        return result;
+        return ThumbOpcode.formatTab[1][bit12_11];
     }
     
     private Opcode decodeFormat_2(int[] operands) {
         int bit10_9 = (instr >>> 9) & 0b11;
-        Opcode result = opcodeFormat[2][bit10_9];
-        int dst = instr & 0b111;
-        int left = (instr >>> 3) & 0b111;
-        int right = (instr >>> 6) & 0b111;
-        result.setOperand(dst, left, right);
-        return result;
+        operands[0] = instr & 0b111;
+        operands[1] = (instr >>> 3) & 0b111;
+        operands[2] = (instr >>> 6) & 0b111;
+        return ThumbOpcode.formatTab[2][bit10_9];
     }
     
     private Opcode decodeFormat_1_2(int[] operands) {
