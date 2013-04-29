@@ -16,8 +16,8 @@ public class Thumb implements Cpu {
         /*  2 */ {ThumbOpcode.ADD_REG_REG, ThumbOpcode.SUB_REG_REG,
                   ThumbOpcode.ADD_REG_IMMED, ThumbOpcode.SUB_REG_IMMED
                  },
-        /*  3 */ {new OpcodeMOV_Immed(), new OpcodeCMP_Immed(),
-                  new OpcodeADD_Immed(), new OpcodeSUB_Immed(),
+        /*  3 */ {ThumbOpcode.MOV_IMMED, ThumbOpcode.CMP_IMMED,
+                  ThumbOpcode.ADD_IMMED, ThumbOpcode.SUB_IMMED
                  },
         /*  4 */ {new OpcodeAND_Reg(), new OpcodeEOR_Reg(),
                   new OpcodeLSL_Reg(), new OpcodeLSR_Reg(),
@@ -399,20 +399,16 @@ public class Thumb implements Cpu {
     
     private Opcode decodeFormat_3(int[] operands) {
         int bit12_11 = (instr >>> 11) & 3;
-        Opcode result = opcodeFormat[3][bit12_11];
-        int dst = (instr >>> 8) & 7;
-        int src = instr & 0xFF;
-        result.setOperand(dst, src);
-        return result;
+        operands[0] = (instr >>> 8) & 7;
+        operands[1] = instr & 0xFF;
+        return ThumbOpcode.formatTab[3][bit12_11];
     }
     
     private Opcode decodeFormat_4(int[] operands) {
         int bit9_6 = (instr >>> 6) & 0xF;
-        Opcode result = opcodeFormat[4][bit9_6];
-        int dst = instr & 7;
-        int src = (instr >>> 3) & 7;
-        result.setOperand(dst, src);
-        return result;
+        operands[0] = instr & 7;
+        operands[1] = (instr >>> 3) & 7;
+        return ThumbOpcode.formatTab[4][bit9_6];
     }
     
     private Opcode decodeFormat_5(int[] operands) {

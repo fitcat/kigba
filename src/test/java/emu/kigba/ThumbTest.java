@@ -109,6 +109,11 @@ public class ThumbTest {
         assertEquals("Opcode short name should match", shortName, op.getShortName());
         assertEquals("Opcode extra name should match", extraName, op.getExtraName());
     }
+
+    private void assertTwoOperands(int dst, int src, int[] actual) {
+        assertEquals("Operand dst should match", dst, actual[0]);
+        assertEquals("Operand left should match", src, actual[1]);
+    }
     
     private void assertThreeOperands(int dst, int left, int right, int[] actual) {
         assertEquals("Operand dst should match", dst, actual[0]);
@@ -118,7 +123,8 @@ public class ThumbTest {
     
     @Test
     public void decodeFormat_1() {
-        for (int i = 0; i < ThumbOpcode.formatTab[1].length; ++i) {
+        final String[] name = {"LSL", "LSR", "ASR"};
+        for (int i = 0; i < name.length; ++i) {
             int dst = rand.nextInt(8);
             int src = rand.nextInt(8);
             int immed = rand.nextInt(32);
@@ -127,13 +133,15 @@ public class ThumbTest {
             cpu.fetch();
             Opcode op = cpu.decode(cpu.getOperands());
             assertEquals("Opcode should match", ThumbOpcode.formatTab[1][i], op);
+            assertEquals("Opcode name should match", name[i], op.getShortName());
             assertThreeOperands(dst, src, immed, cpu.getOperands());
         }
     }
 
     @Test
     public void decodeFormat_2() {
-        for (int i = 0; i < ThumbOpcode.formatTab[2].length; ++i) {
+        final String[] name = {"ADD", "SUB", "ADD", "SUB"};
+        for (int i = 0; i < name.length; ++i) {
             int dst = rand.nextInt(8);
             int left = rand.nextInt(8);
             int right = rand.nextInt(8);
@@ -142,15 +150,14 @@ public class ThumbTest {
             cpu.fetch();
             Opcode op = cpu.decode(cpu.getOperands());
             assertEquals("Opcode should match", ThumbOpcode.formatTab[2][i], op);
+            assertEquals("Opcode name should match", name[i], op.getShortName());
             assertThreeOperands(dst, left, right, cpu.getOperands());
         }
     }
 
     @Test
     public void decodeFormat_3() {
-        final String[] name = {
-            "MOV", "CMP", "ADD", "SUB",
-        };
+        final String[] name = {"MOV", "CMP", "ADD", "SUB"};
         for (int i = 0; i < name.length; ++i) {
             int dst = rand.nextInt(8);
             int src = rand.nextInt(256);
@@ -158,7 +165,9 @@ public class ThumbTest {
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
             Opcode op = cpu.decode(cpu.getOperands());
-            assertOpcodeWithTwoOperands(op, name[i], "Immed", dst, src);
+            assertEquals("Opcode should match", ThumbOpcode.formatTab[3][i], op);
+            assertEquals("Opcode name should match", name[i], op.getShortName());
+            assertTwoOperands(dst, src, cpu.getOperands());
         }
     }
 
@@ -177,7 +186,9 @@ public class ThumbTest {
             when(mockedMM.fetchHalfWord(0)).thenReturn(instr);
             cpu.fetch();
             Opcode op = cpu.decode(cpu.getOperands());
-            assertOpcodeWithTwoOperands(op, name[i], "Reg", dst, src);
+            assertEquals("Opcode should match", ThumbOpcode.formatTab[4][i], op);
+            assertEquals("Opcode name should match", name[i], op.getShortName());
+            assertTwoOperands(dst, src, cpu.getOperands());
         }
     }
 

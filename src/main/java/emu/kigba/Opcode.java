@@ -22,13 +22,15 @@ public interface Opcode {
 }
 
 enum ThumbOpcode implements Opcode {
-    UNDEFINED("???", "") {
+    // Format 0 (no such format and is used solely for undefined opcode)
+    UNDEFINED("???") {
         @Override
         public void execute(Cpu cpu, int[] operands) {
             // TODO
         }
     },
-    LSL_REG_IMMED("LSL", "RegImmed") {
+    // Format 1 - 0: LSL Rd, Rs, #immed
+    LSL_REG_IMMED("LSL") {
         @Override
         public void execute(Cpu cpu, int[] operands) {
             int rd = operands[0];
@@ -46,7 +48,8 @@ enum ThumbOpcode implements Opcode {
             cpu.addCycle(ArmCycle.S1);
         }
     },
-    LSR_REG_IMMED("LSR", "RegImmed") {
+    // Format 1 - 1: LSR Rd, Rs, #immed
+    LSR_REG_IMMED("LSR") {
         @Override
         public void execute(Cpu cpu, int[] operands) {
             int rd = operands[0];
@@ -69,7 +72,8 @@ enum ThumbOpcode implements Opcode {
             cpu.addCycle(ArmCycle.S1);
         }
     },
-    ASR_REG_IMMED("ASR", "RegImmed") {
+    // Format 1 - 2: ASR Rd, Rs, #immed
+    ASR_REG_IMMED("ASR") {
         @Override
         public void execute(Cpu cpu, int[] operands) {
             int rd = operands[0];
@@ -92,29 +96,173 @@ enum ThumbOpcode implements Opcode {
             cpu.addCycle(ArmCycle.S1);
         }
     },
-    ADD_REG_REG("ADD", "RegReg") {
+    // Format 2 - 0: ADD Rd, Rs, Rn
+    ADD_REG_REG("ADD") {
         @Override
         public void execute(Cpu cpu, int[] operands) {
             
         }
     },
-    SUB_REG_REG("ADD", "RegReg") {
+    // Format 2 - 1: SUB Rd, Rs, Rn
+    SUB_REG_REG("SUB") {
         @Override
         public void execute(Cpu cpu, int[] operands) {
             
         }
     },
-    ADD_REG_IMMED("ADD", "RegImmed") {
+    // Format 2 - 2: ADD Rd, Rs, #immed
+    ADD_REG_IMMED("ADD") {
         @Override
         public void execute(Cpu cpu, int[] operands) {
             
         }
     },
-    SUB_REG_IMMED("SUB", "RegImmed") {
+    // Format 2 - 3: SUB Rd, Rs, #immed
+    SUB_REG_IMMED("SUB") {
         @Override
         public void execute(Cpu cpu, int[] operands) {
             
         }
+    },
+    // Format 3 - 0: MOV Rd, #immed
+    MOV_IMMED("MOV") {
+        @Override
+        public void execute(Cpu cpu, int[] operands) {
+            
+        }
+    },
+    // Format 3 - 1: CMP Rd, #immed
+    CMP_IMMED("CMP") {
+        @Override
+        public void execute(Cpu cpu, int[] operands) {
+            
+        }
+    },
+    // Format 3 - 2: ADD Rd, #immed
+    ADD_IMMED("ADD") {
+        @Override
+        public void execute(Cpu cpu, int[] operands) {
+            
+        }
+    },
+    // Format 3 - 3: SUB Rd, #immed
+    SUB_IMMED("SUB") {
+        @Override
+        public void execute(Cpu cpu, int[] operands) {
+            
+        }
+    },
+    // Format 4 - 0: AND Rd, Rs
+    AND_REG("AND") {
+        @Override
+        public void execute(Cpu cpu, int[] operands) {
+            
+        }        
+    },
+    // Format 4 - 1: EOR Rd, Rs
+    EOR_REG("EOR") {
+        @Override
+        public void execute(Cpu cpu, int[] operands) {
+            
+        }        
+    },
+    // Format 4 - 2: LSL Rd, Rs
+    LSL_REG("LSL") {
+        @Override
+        public void execute(Cpu cpu, int[] operands) {
+            
+        }        
+    },
+    // Format 4 - 3: LSR Rd, Rs
+    LSR_REG("LSR") {
+        @Override
+        public void execute(Cpu cpu, int[] operands) {
+            
+        }        
+    },
+    // Format 4 - 4: ASR Rd, Rs
+    ASR_REG("ASR") {
+        @Override
+        public void execute(Cpu cpu, int[] operands) {
+            
+        }        
+    },
+    // Format 4 - 5: ADC Rd, Rs
+    ADC_REG("ADC") {
+        @Override
+        public void execute(Cpu cpu, int[] operands) {
+            
+        }        
+    },
+    // Format 4 - 6: SBC Rd, Rs
+    SBC_REG("SBC") {
+        @Override
+        public void execute(Cpu cpu, int[] operands) {
+            
+        }        
+    },
+    // Format 4 - 7: ROR Rd, Rs
+    ROR_REG("ROR") {
+        @Override
+        public void execute(Cpu cpu, int[] operands) {
+            
+        }        
+    },
+    // Format 4 - 8: TST Rd, Rs
+    TST_REG("TST") {
+        @Override
+        public void execute(Cpu cpu, int[] operands) {
+            
+        }        
+    },
+    // Format 4 - 9: NEG Rd, Rs
+    NEG_REG("NEG") {
+        @Override
+        public void execute(Cpu cpu, int[] operands) {
+            
+        }        
+    },
+    // Format 4 - 10: CMP Rd, Rs
+    CMP_REG("CMP") {
+        @Override
+        public void execute(Cpu cpu, int[] operands) {
+            
+        }        
+    },
+    // Format 4 - 11: CMN Rd, Rs
+    CMN_REG("CMN") {
+        @Override
+        public void execute(Cpu cpu, int[] operands) {
+            
+        }        
+    },
+    // Format 4 - 12: ORR Rd, Rs
+    ORR_REG("ORR") {
+        @Override
+        public void execute(Cpu cpu, int[] operands) {
+            
+        }        
+    },
+    // Format 4 - 13: MUL Rd, Rs
+    MUL_REG("MUL") {
+        @Override
+        public void execute(Cpu cpu, int[] operands) {
+            
+        }        
+    },
+    // Format 4 - 14: BIC Rd, Rs
+    BIC_REG("BIC") {
+        @Override
+        public void execute(Cpu cpu, int[] operands) {
+            
+        }        
+    },
+    // Format 4 - 15: MVN Rd, Rs
+    MVN_REG("MVN") {
+        @Override
+        public void execute(Cpu cpu, int[] operands) {
+            
+        }        
     }
     ;
     
@@ -130,14 +278,22 @@ enum ThumbOpcode implements Opcode {
         formatTab[2] = new Opcode[] {
             ADD_REG_REG, SUB_REG_REG, ADD_REG_IMMED, SUB_REG_IMMED
         };
+        formatTab[3] = new Opcode[] {
+            MOV_IMMED, CMP_IMMED, ADD_IMMED, SUB_IMMED
+        };
+        formatTab[4] = new Opcode[] {
+            AND_REG, EOR_REG, LSL_REG, LSR_REG,
+            ASR_REG, ADC_REG, SBC_REG, ROR_REG,
+            TST_REG, NEG_REG, CMP_REG, CMN_REG,
+            ORR_REG, MUL_REG, BIC_REG, MVN_REG
+        };
     }
     
     private String shortName;
     private String extraName;
     
-    ThumbOpcode(String sn, String en) {
+    ThumbOpcode(String sn) {
         shortName = sn;
-        extraName = en;
     }
     
     @Override
