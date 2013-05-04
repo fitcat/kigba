@@ -65,7 +65,6 @@ public class Thumb implements Cpu {
     
     private Arm7Register register;
     private MemoryManager memMgr;
-    private Cycle cycle;
     private int instr;      // the current instruction
     private int[] operands; // the operands of the current instruction
 
@@ -88,7 +87,7 @@ public class Thumb implements Cpu {
             }
         }
         
-        public void execute(Cpu cpu, int[] operands) {
+        public CpuCycle execute(Cpu cpu, int[] operands) {
             throw new UnsupportedOperationException("Method execute() must be defined.");
         }
         
@@ -360,10 +359,9 @@ public class Thumb implements Cpu {
         }       
     }
     
-    public Thumb(Arm7Register reg, MemoryManager mm, Cycle cycle) {
+    public Thumb(Arm7Register reg, MemoryManager mm) {
         register = reg;
         memMgr = mm;
-        this.cycle = cycle;
         operands = new int[3];
     }
     
@@ -716,8 +714,4 @@ public class Thumb implements Cpu {
         register.setCpuMode(newMode);
     }
     
-    @Override
-    public void addCycle(Cycle cyc) {
-        cycle.add(cyc);
-    }
 }

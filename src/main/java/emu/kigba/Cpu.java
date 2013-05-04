@@ -20,5 +20,4 @@ public interface Cpu {
     void setCarryFlag(boolean cf);
     void setOverflowFlag(boolean vf);
     void setCpuMode(CpuMode newMode);
-    void addCycle(Cycle cyc);
 }

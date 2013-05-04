@@ -20,7 +20,6 @@ import org.mockito.InOrder;
 public class ThumbTest {
     Arm7Register mockedRegister;
     MemoryManager mockedMM;
-    ArmCycle mockedCycle;
     Cpu cpu;
     java.util.Random rand;
     int[] operands;
@@ -40,8 +39,7 @@ public class ThumbTest {
     public void setUp() {
         mockedRegister = mock(Arm7Register.class);
         mockedMM = mock(MemoryManager.class);
-        mockedCycle = mock(ArmCycle.class);
-        cpu = new Thumb(mockedRegister, mockedMM, mockedCycle);
+        cpu = new Thumb(mockedRegister, mockedMM);
         rand = new java.util.Random();
         operands = new int[3];
     }
@@ -622,7 +620,7 @@ public class ThumbTest {
         int rsValue = rand.nextInt();
         when(mockedRegister.get(operands[1])).thenReturn(rsValue);
         // execute SUT
-        ThumbOpcode.LSL_REG_IMMED.execute(cpu, operands);
+        CpuCycle cc = ThumbOpcode.LSL_REG_IMMED.execute(cpu, operands);
         // verify the shifted result
         int expect = rsValue << operands[2];
         verify(mockedRegister).set(operands[0], expect);
@@ -634,7 +632,7 @@ public class ThumbTest {
         newCf = (carry == 1);
         verifyZero(newZf).verifySigned(newNf).verifyCarry(newCf).unchangeOverflow();
         // verify cycles taken
-        verify(mockedCycle).add(ArmCycle.S1);
+        assertEquals(new CpuCycle(0, 1, 0, 0, 0), cc);
     }
 
     @Test
@@ -647,7 +645,7 @@ public class ThumbTest {
         int rsValue = rand.nextInt();
         when(mockedRegister.get(operands[1])).thenReturn(rsValue);
         // execute SUT
-        ThumbOpcode.LSL_REG_IMMED.execute(cpu, operands);
+        CpuCycle cc = ThumbOpcode.LSL_REG_IMMED.execute(cpu, operands);
         // verify the shifted result
         int expect = rsValue << operands[2];
         verify(mockedRegister).set(operands[0], expect);
@@ -656,7 +654,7 @@ public class ThumbTest {
         boolean newNf = (expect < 0);
         verifyZero(newZf).verifySigned(newNf).unchangeCarry().unchangeOverflow();
         // verify cycles taken
-        verify(mockedCycle).add(ArmCycle.S1);
+        assertEquals(new CpuCycle(0, 1, 0, 0, 0), cc);
     }
     
     @Test
@@ -669,7 +667,7 @@ public class ThumbTest {
         int rsValue = rand.nextInt();
         when(mockedRegister.get(operands[1])).thenReturn(rsValue);
         // execute SUT
-        ThumbOpcode.LSR_REG_IMMED.execute(cpu, operands);
+        CpuCycle cc = ThumbOpcode.LSR_REG_IMMED.execute(cpu, operands);
         // verify the shifted result
         int expect = rsValue >>> operands[2];
         verify(mockedRegister).set(operands[0], expect);
@@ -681,7 +679,7 @@ public class ThumbTest {
         newCf = (carry == 1);
         verifyZero(newZf).verifySigned(newNf).verifyCarry(newCf).unchangeOverflow();
         // verify cycles taken
-        verify(mockedCycle).add(ArmCycle.S1);
+        assertEquals(new CpuCycle(0, 1, 0, 0, 0), cc);
     }
 
     @Test
@@ -694,7 +692,7 @@ public class ThumbTest {
         int rsValue = rand.nextInt();
         when(mockedRegister.get(operands[1])).thenReturn(rsValue);
         // execute SUT
-        ThumbOpcode.LSR_REG_IMMED.execute(cpu, operands);
+        CpuCycle cc = ThumbOpcode.LSR_REG_IMMED.execute(cpu, operands);
         // verify the shifted result
         int expect = 0; // immed is zero means 32 => set to 0
         verify(mockedRegister).set(operands[0], expect);
@@ -706,7 +704,7 @@ public class ThumbTest {
         newCf = (carry == 1);
         verifyZero(newZf).verifySigned(newNf).verifyCarry(newCf).unchangeOverflow();
         // verify cycles taken
-        verify(mockedCycle).add(ArmCycle.S1);
+        assertEquals(new CpuCycle(0, 1, 0, 0, 0), cc);
     }
     
     @Test
@@ -719,7 +717,7 @@ public class ThumbTest {
         int rsValue = rand.nextInt();
         when(mockedRegister.get(operands[1])).thenReturn(rsValue);
         // execute SUT
-        ThumbOpcode.ASR_REG_IMMED.execute(cpu, operands);
+        CpuCycle cc = ThumbOpcode.ASR_REG_IMMED.execute(cpu, operands);
         // verify the shifted result
         int expect = rsValue >> operands[2];
         verify(mockedRegister).set(operands[0], expect);
@@ -731,7 +729,7 @@ public class ThumbTest {
         newCf = (carry == 1);
         verifyZero(newZf).verifySigned(newNf).verifyCarry(newCf).unchangeOverflow();
         // verify cycles taken
-        verify(mockedCycle).add(ArmCycle.S1);
+        assertEquals(new CpuCycle(0, 1, 0, 0, 0), cc);
     }
 
     @Test
@@ -744,7 +742,7 @@ public class ThumbTest {
         int rsValue = rand.nextInt();
         when(mockedRegister.get(operands[1])).thenReturn(rsValue);
         // execute SUT
-        ThumbOpcode.ASR_REG_IMMED.execute(cpu, operands);
+        CpuCycle cc = ThumbOpcode.ASR_REG_IMMED.execute(cpu, operands);
         // verify the shifted result
         int expect = 0; // immed is zero means 32 => set to 0
         verify(mockedRegister).set(operands[0], expect);
@@ -754,7 +752,7 @@ public class ThumbTest {
         boolean newCf = (rsValue < 0);
         verifyZero(newZf).verifySigned(newNf).verifyCarry(newCf).unchangeOverflow();
         // verify cycles taken
-        verify(mockedCycle).add(ArmCycle.S1);
+        assertEquals(new CpuCycle(0, 1, 0, 0, 0), cc);
     }
     
 }
