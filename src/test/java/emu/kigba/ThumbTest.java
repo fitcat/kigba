@@ -21,14 +21,14 @@ public class ThumbTest {
     Arm7Register mockedRegister;
     MemoryManager mockedMM;
     Cpu cpu;
-    java.util.Random rand;
-    int[] operands;
+    static java.util.Random rand;
     
     public ThumbTest() {
     }
     
     @BeforeClass
     public static void setUpClass() {
+        rand = new java.util.Random();
     }
     
     @AfterClass
@@ -40,8 +40,6 @@ public class ThumbTest {
         mockedRegister = mock(Arm7Register.class);
         mockedMM = mock(MemoryManager.class);
         cpu = new Thumb(mockedRegister, mockedMM);
-        rand = new java.util.Random();
-        operands = new int[3];
     }
     
     @After
@@ -564,195 +562,6 @@ public class ThumbTest {
         cpu.fetch();
         Opcode op = cpu.decode(cpu.getOperands());
         assertOpcodeNames(op, "???", "");
-    }
-    
-    private ThumbTest verifyZero(boolean zf) {
-        if (zf)
-            verify(mockedRegister).setZero();
-        else
-            verify(mockedRegister).clearZero();
-        return this;
-    }
-
-    private ThumbTest verifySigned(boolean nf) {
-        if (nf)
-            verify(mockedRegister).setSigned();
-        else
-            verify(mockedRegister).clearSigned();
-        return this;
-    }
-
-    private ThumbTest verifyCarry(boolean cf) {
-        if (cf)
-            verify(mockedRegister).setCarry();
-        else
-            verify(mockedRegister).clearCarry();
-        return this;
-    }
-
-    private ThumbTest verifyOverflow(boolean vf) {
-        if (vf)
-            verify(mockedRegister).setOverflow();
-        else
-            verify(mockedRegister).clearOverflow();
-        return this;
-    }
-    
-    private ThumbTest unchangeCarry() {
-        verify(mockedRegister, never()).setCarry();
-        verify(mockedRegister, never()).clearCarry();
-        return this;
-    }
-
-    private ThumbTest unchangeOverflow() {
-        verify(mockedRegister, never()).setOverflow();
-        verify(mockedRegister, never()).clearOverflow();
-        return this;
-    }
-    
-    @Test
-    public void executeFormat_1_LSL_withNonZeroImmed() {
-        // prepare the operands
-        operands[0] = rand.nextInt(8);          // Rd
-        operands[1] = rand.nextInt(8);          // Rs
-        operands[2] = rand.nextInt(31) + 1;     // Immed (non-zero)
-        // prepare the value for Rs
-        int rsValue = rand.nextInt();
-        when(mockedRegister.get(operands[1])).thenReturn(rsValue);
-        // execute SUT
-        CpuCycle cc = ThumbOpcode.LSL_REG_IMMED.execute(cpu, operands);
-        // verify the shifted result
-        int expect = rsValue << operands[2];
-        verify(mockedRegister).set(operands[0], expect);
-        // verify the flags
-        boolean newZf = (expect == 0);
-        boolean newNf = (expect < 0);
-        boolean newCf;
-        int carry = (rsValue >>> (32 - operands[2])) & 1;
-        newCf = (carry == 1);
-        verifyZero(newZf).verifySigned(newNf).verifyCarry(newCf).unchangeOverflow();
-        // verify cycles taken
-        assertEquals(new CpuCycle(0, 1, 0, 0, 0), cc);
-    }
-
-    @Test
-    public void executeFormat_1_LSL_withZeroImmed() {
-        // prepare the operands
-        operands[0] = rand.nextInt(8);   // Rd
-        operands[1] = rand.nextInt(8);   // Rs
-        operands[2] = 0;                // Immed = 0
-        // prepare the value for Rs
-        int rsValue = rand.nextInt();
-        when(mockedRegister.get(operands[1])).thenReturn(rsValue);
-        // execute SUT
-        CpuCycle cc = ThumbOpcode.LSL_REG_IMMED.execute(cpu, operands);
-        // verify the shifted result
-        int expect = rsValue << operands[2];
-        verify(mockedRegister).set(operands[0], expect);
-        // verify the flags
-        boolean newZf = (expect == 0);
-        boolean newNf = (expect < 0);
-        verifyZero(newZf).verifySigned(newNf).unchangeCarry().unchangeOverflow();
-        // verify cycles taken
-        assertEquals(new CpuCycle(0, 1, 0, 0, 0), cc);
-    }
-    
-    @Test
-    public void executeFormat_1_LSR_withNonZeroImmed() {
-        // prepare the operands
-        operands[0] = rand.nextInt(8);          // Rd
-        operands[1] = rand.nextInt(8);          // Rs
-        operands[2] = rand.nextInt(31) + 1;     // Immed (non-zero)
-        // prepare the value for Rs
-        int rsValue = rand.nextInt();
-        when(mockedRegister.get(operands[1])).thenReturn(rsValue);
-        // execute SUT
-        CpuCycle cc = ThumbOpcode.LSR_REG_IMMED.execute(cpu, operands);
-        // verify the shifted result
-        int expect = rsValue >>> operands[2];
-        verify(mockedRegister).set(operands[0], expect);
-        // verify the flags
-        boolean newZf = (expect == 0);
-        boolean newNf = (expect < 0);
-        boolean newCf;
-        int carry = (rsValue >>> (operands[2] - 1)) & 1;
-        newCf = (carry == 1);
-        verifyZero(newZf).verifySigned(newNf).verifyCarry(newCf).unchangeOverflow();
-        // verify cycles taken
-        assertEquals(new CpuCycle(0, 1, 0, 0, 0), cc);
-    }
-
-    @Test
-    public void executeFormat_1_LSR_withZeroImmed() {
-        // prepare the operands
-        operands[0] = rand.nextInt(8);   // Rd
-        operands[1] = rand.nextInt(8);   // Rs
-        operands[2] = 0;                // Immed = 0
-        // prepare the value for Rs
-        int rsValue = rand.nextInt();
-        when(mockedRegister.get(operands[1])).thenReturn(rsValue);
-        // execute SUT
-        CpuCycle cc = ThumbOpcode.LSR_REG_IMMED.execute(cpu, operands);
-        // verify the shifted result
-        int expect = 0; // immed is zero means 32 => set to 0
-        verify(mockedRegister).set(operands[0], expect);
-        // verify the flags
-        boolean newZf = (expect == 0);
-        boolean newNf = (expect < 0);
-        boolean newCf;
-        int carry = (rsValue >>> (operands[2] - 1)) & 1;
-        newCf = (carry == 1);
-        verifyZero(newZf).verifySigned(newNf).verifyCarry(newCf).unchangeOverflow();
-        // verify cycles taken
-        assertEquals(new CpuCycle(0, 1, 0, 0, 0), cc);
-    }
-    
-    @Test
-    public void executeFormat_1_ASR_withNonZeroImmed() {
-        // prepare the operands
-        operands[0] = rand.nextInt(8);          // Rd
-        operands[1] = rand.nextInt(8);          // Rs
-        operands[2] = rand.nextInt(31) + 1;     // Immed (non-zero)
-        // prepare the value for Rs
-        int rsValue = rand.nextInt();
-        when(mockedRegister.get(operands[1])).thenReturn(rsValue);
-        // execute SUT
-        CpuCycle cc = ThumbOpcode.ASR_REG_IMMED.execute(cpu, operands);
-        // verify the shifted result
-        int expect = rsValue >> operands[2];
-        verify(mockedRegister).set(operands[0], expect);
-        // verify the flags
-        boolean newZf = (expect == 0);
-        boolean newNf = (expect < 0);
-        boolean newCf;
-        int carry = (rsValue >>> (operands[2] - 1)) & 1;
-        newCf = (carry == 1);
-        verifyZero(newZf).verifySigned(newNf).verifyCarry(newCf).unchangeOverflow();
-        // verify cycles taken
-        assertEquals(new CpuCycle(0, 1, 0, 0, 0), cc);
-    }
-
-    @Test
-    public void executeFormat_1_ASR_withZeroImmed() {
-        // prepare the operands
-        operands[0] = rand.nextInt(8);          // Rd
-        operands[1] = rand.nextInt(8);          // Rs
-        operands[2] = 0;                        // Immed = 0
-        // prepare the value for Rs
-        int rsValue = rand.nextInt();
-        when(mockedRegister.get(operands[1])).thenReturn(rsValue);
-        // execute SUT
-        CpuCycle cc = ThumbOpcode.ASR_REG_IMMED.execute(cpu, operands);
-        // verify the shifted result
-        int expect = 0; // immed is zero means 32 => set to 0
-        verify(mockedRegister).set(operands[0], expect);
-        // verify the flags
-        boolean newZf = (expect == 0);
-        boolean newNf = (expect < 0);
-        boolean newCf = (rsValue < 0);
-        verifyZero(newZf).verifySigned(newNf).verifyCarry(newCf).unchangeOverflow();
-        // verify cycles taken
-        assertEquals(new CpuCycle(0, 1, 0, 0, 0), cc);
     }
     
 }

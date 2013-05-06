@@ -11,6 +11,12 @@ package emu.kigba;
 public class CpuCycle {
     private int codeN, codeS, dataN, dataS, coreI;
     
+    public static final CpuCycle CODE_S1;
+    
+    static {
+        CODE_S1 = new CpuCycle(0, 1, 0, 0, 0);
+    }
+    
     public CpuCycle(int codeN, int codeS, int dataN, int dataS, int coreI) {
         this.codeN = codeN;
         this.codeS = codeS;
@@ -21,6 +27,8 @@ public class CpuCycle {
     
     @Override
     public boolean equals(Object o) {
+        if (this == o)
+            return true;
         if (!(o instanceof CpuCycle))
             return false;
         CpuCycle cc = (CpuCycle) o;

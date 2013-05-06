@@ -46,7 +46,7 @@ enum ThumbOpcode implements Opcode {
             if (immed != 0) {
                 cpu.setCarryFlag(((rsValue >>> (32 - immed)) & 1) == 1);
             }
-            return new CpuCycle(0, 1, 0, 0, 0);
+            return CpuCycle.CODE_S1;
         }
     },
     // Format 1 - 1: LSR Rd, Rs, #immed
@@ -70,7 +70,7 @@ enum ThumbOpcode implements Opcode {
             else {  // Carry flag equals to the msb
                 cpu.setCarryFlag(rsValue < 0);  // msb means signed
             }
-            return new CpuCycle(0, 1, 0, 0, 0);
+            return CpuCycle.CODE_S1;
         }
     },
     // Format 1 - 2: ASR Rd, Rs, #immed
@@ -94,15 +94,29 @@ enum ThumbOpcode implements Opcode {
             else {  // Carry flag equals to the msb
                 cpu.setCarryFlag(rsValue < 0);  // msb means signed
             }
-            return new CpuCycle(0, 1, 0, 0, 0);
+            return CpuCycle.CODE_S1;
         }
     },
     // Format 2 - 0: ADD Rd, Rs, Rn
     ADD_REG_REG("ADD") {
         @Override
         public CpuCycle execute(Cpu cpu, int[] operands) {
-            return new CpuCycle(0, 1, 0, 0, 0);
-            
+            int rd = operands[0];
+            int rs = operands[1];
+            int rn = operands[2];
+            int rsValue = cpu.getRegister(rs);
+            int rnValue = cpu.getRegister(rn);
+            int rdValue = rsValue + rnValue;
+            cpu.setRegister(rd, rdValue);
+            cpu.setZeroFlag(rdValue == 0);
+            cpu.setSignedFlag(rdValue < 0);
+            long fullValue = intToUnsignedLong(rsValue) + intToUnsignedLong(rnValue);
+            cpu.setCarryFlag(fullValue > MAX_UNSIGNED_INT);
+            boolean rsValueNegative = (rsValue < 0);
+            boolean rnValueNegative = (rnValue < 0);
+            boolean rdValueNegative = (rdValue < 0);
+            cpu.setOverflowFlag((rsValueNegative == rnValueNegative) && (rsValueNegative != rdValueNegative));
+            return CpuCycle.CODE_S1;
         }
     },
     // Format 2 - 1: SUB Rd, Rs, Rn
@@ -268,6 +282,8 @@ enum ThumbOpcode implements Opcode {
     }
     ;
     
+    private final static long MAX_UNSIGNED_INT = (1L << Integer.SIZE) - 1;
+    private final static long INTEGER_MASK = MAX_UNSIGNED_INT;
     public static final int FORMAT_SIZE = 20;  // include UNDEFINED
     public static final Opcode[][] formatTab;
     
@@ -296,6 +312,10 @@ enum ThumbOpcode implements Opcode {
     
     ThumbOpcode(String sn) {
         shortName = sn;
+    }
+    
+    static long intToUnsignedLong(int v) {
+        return ((long) v) & INTEGER_MASK;
     }
     
     @Override
