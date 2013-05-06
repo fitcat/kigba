@@ -110,12 +110,10 @@ enum ThumbOpcode implements Opcode {
             cpu.setRegister(rd, rdValue);
             cpu.setZeroFlag(rdValue == 0);
             cpu.setSignedFlag(rdValue < 0);
-            long fullValue = intToUnsignedLong(rsValue) + intToUnsignedLong(rnValue);
-            cpu.setCarryFlag(fullValue > MAX_UNSIGNED_INT);
-            boolean rsValueNegative = (rsValue < 0);
-            boolean rnValueNegative = (rnValue < 0);
-            boolean rdValueNegative = (rdValue < 0);
-            cpu.setOverflowFlag((rsValueNegative == rnValueNegative) && (rsValueNegative != rdValueNegative));
+            long unsignedValue = intToUnsignedLong(rsValue) + intToUnsignedLong(rnValue);
+            cpu.setCarryFlag(unsignedValue > MAX_UNSIGNED_INT);
+            long fullValue = ((long) rsValue) + rnValue;
+            cpu.setOverflowFlag((fullValue > Integer.MAX_VALUE) || (fullValue < Integer.MIN_VALUE));
             return CpuCycle.CODE_S1;
         }
     },
