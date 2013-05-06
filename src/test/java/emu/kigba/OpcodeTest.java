@@ -28,6 +28,20 @@ public class OpcodeTest {
     static java.util.Random rand;
     static int[] operands;
     
+    class Entry {
+        int op1, op2, result;
+        boolean zf, nf, cf, vf;
+        Entry(int op1, int op2, int result, boolean zf, boolean nf, boolean cf, boolean vf) {
+            this.op1 = op1;
+            this.op2 = op2;
+            this.result = result;
+            this.zf = zf;
+            this.nf = nf;
+            this.cf = cf;
+            this.vf = vf;
+        }
+    }
+    
     public OpcodeTest() {
     }
     
@@ -262,68 +276,54 @@ public class OpcodeTest {
         }
     }
     
+    private void verifyFlags(InOrder inOrder, boolean zf, boolean nf, boolean cf, boolean vf) {
+        if (zf)
+            inOrder.verify(mockedRegister).setZero();
+        else
+            inOrder.verify(mockedRegister).clearZero();
+        if (nf)
+            inOrder.verify(mockedRegister).setSigned();
+        else
+            inOrder.verify(mockedRegister).clearSigned();
+        if (cf)
+            inOrder.verify(mockedRegister).setCarry();
+        else
+            inOrder.verify(mockedRegister).clearCarry();
+        if (vf)
+            inOrder.verify(mockedRegister).setOverflow();
+        else
+            inOrder.verify(mockedRegister).clearOverflow();
+    }
+    
     @Test
     public void executeFormat_2_ADD_Register_Flag_N() {
-        // prepare the operands
+        // define the registers
         operands[0] = 1;          // Rd
         operands[1] = 2;          // Rs
         operands[2] = 3;          // Rn
-        // prepare the value for Rs and Rn
-        // each flag consists of 2 sets of data - one for clear and one for set
-        int[] rsValue = {
-            1, 0,               // Z
-            -1, -100,           // N
-            3, -1,              // C
-            3, 0x7FFFFFFF,      // V
-        };
-        int[] rnValue = {
-            2, 0,               // Z
-            3, 99,              // N
-            4, -2,              // C
-            -2, 2,              // V
-        };
-        int[] expect = {
-            3, 0,
-            2, -1,
-            7, -3,
-            1, 0x80000001,
-        };
-        boolean[] zf = {
-            false, true,
-            false, false,
-            false, false,
-            false, false,
-        };
-        boolean[] nf = {
-            false, false,
-            false, true,
-            false, true,
-            false, true, 
-        };
-        boolean[] cf = {
-            false, false,
-            true, false,
-            false, true,
-            true, false,
-        };
-        boolean[] vf = {
-            false, false,
-            false, false,
-            false, false,
-            false, true,
+        // define the data for the test
+        Entry[] entry = {
+            new Entry(1, 2, 3, false, false, false, false),
+            new Entry(0, 0, 0, true, false, false, false),
+            new Entry(-1, 3, 2, false, false, true, false),
+            new Entry(-100, 99, -1, false, true, false, false),
+            new Entry(-1, 1, 0, true, false, true, false),
+            new Entry(-1, -2, -3, false, true, true, false),
+            new Entry(3, -2, 1, false, false, true, false),
+            new Entry(0x7FFFFFFF, 2, 0x80000001, false, true, false, true),
         };
         InOrder inOrder = inOrder(mockedRegister);
-        for (int i = 0; i < rsValue.length; ++i) {
-            when(mockedRegister.get(operands[1])).thenReturn(rsValue[i]);
-            when(mockedRegister.get(operands[2])).thenReturn(rnValue[i]);
+        for (int i = 0; i < entry.length; ++i) {
+            when(mockedRegister.get(operands[1])).thenReturn(entry[i].op1);
+            when(mockedRegister.get(operands[2])).thenReturn(entry[i].op2);
             // execute SUT
             CpuCycle cc = ThumbOpcode.ADD_REG_REG.execute(cpu, operands);
             // verify the shifted result
-            verify(mockedRegister).set(operands[0], expect[i]);
+            inOrder.verify(mockedRegister).set(operands[0], entry[i].result);
+            // verify flags
+            verifyFlags(inOrder, entry[i].zf, entry[i].nf, entry[i].cf, entry[i].vf);
             // verify cycles taken
             assertEquals(CpuCycle.CODE_S1, cc);
         }
-        // verify flags
-        verifyFlags(inOrder, zf, nf, cf, vf);
     }
 }
