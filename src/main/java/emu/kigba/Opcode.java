@@ -140,14 +140,37 @@ enum ThumbOpcode implements Opcode {
     ADD_REG_IMMED("ADD") {
         @Override
         public CpuCycle execute(Cpu cpu, int[] operands) {
-            return new CpuCycle(0, 1, 0, 0, 0);
+            int rd = operands[0];
+            int rs = operands[1];
+            int immed = operands[2];
+            int rsValue = cpu.getRegister(rs);
+            int rdValue = rsValue + immed;
+            cpu.setRegister(rd, rdValue);
+            cpu.setZeroFlag(rdValue == 0);
+            cpu.setSignedFlag(rdValue < 0);
+            long unsignedValue = intToUnsignedLong(rsValue) + intToUnsignedLong(immed);
+            cpu.setCarryFlag(unsignedValue > MAX_UNSIGNED_INT);
+            long fullValue = ((long) rsValue) + immed;
+            cpu.setOverflowFlag((fullValue > Integer.MAX_VALUE) || (fullValue < Integer.MIN_VALUE));
+            return CpuCycle.CODE_S1;
         }
     },
     // Format 2 - 3: SUB Rd, Rs, #immed
     SUB_REG_IMMED("SUB") {
         @Override
         public CpuCycle execute(Cpu cpu, int[] operands) {
-            return new CpuCycle(0, 1, 0, 0, 0);
+            int rd = operands[0];
+            int rs = operands[1];
+            int immed = operands[2];
+            int rsValue = cpu.getRegister(rs);
+            int rdValue = rsValue - immed;
+            cpu.setRegister(rd, rdValue);
+            cpu.setZeroFlag(rdValue == 0);
+            cpu.setSignedFlag(rdValue < 0);
+            cpu.setCarryFlag(intToUnsignedLong(rsValue) < intToUnsignedLong(immed));
+            long fullValue = ((long) rsValue) - immed;
+            cpu.setOverflowFlag((fullValue > Integer.MAX_VALUE) || (fullValue < Integer.MIN_VALUE));
+            return CpuCycle.CODE_S1;
         }
     },
     // Format 3 - 0: MOV Rd, #immed
