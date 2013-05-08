@@ -254,28 +254,7 @@ public class OpcodeTest {
         // verify cycles taken
         assertEquals(CpuCycle.CODE_S1, cc);
     }
-    
-    private void verifyFlags(InOrder inOrder, boolean[] zf, boolean[] nf, boolean[] cf, boolean[] vf) {
-        for (int i = 0; i < zf.length; ++i) {
-            if (zf[i])
-                inOrder.verify(mockedRegister).setZero();
-            else
-                inOrder.verify(mockedRegister).clearZero();
-            if (nf[i])
-                inOrder.verify(mockedRegister).setSigned();
-            else
-                inOrder.verify(mockedRegister).clearSigned();
-            if (cf[i])
-                inOrder.verify(mockedRegister).setCarry();
-            else
-                inOrder.verify(mockedRegister).clearCarry();
-            if (vf[i])
-                inOrder.verify(mockedRegister).setOverflow();
-            else
-                inOrder.verify(mockedRegister).clearOverflow();
-        }
-    }
-    
+        
     private void verifyFlags(InOrder inOrder, boolean zf, boolean nf, boolean cf, boolean vf) {
         if (zf)
             inOrder.verify(mockedRegister).setZero();
@@ -296,7 +275,7 @@ public class OpcodeTest {
     }
     
     @Test
-    public void executeFormat_2_ADD_Register_Flag_N() {
+    public void executeFormat_2_ADD_Register() {
         // define the registers
         operands[0] = 1;          // Rd
         operands[1] = 2;          // Rs
@@ -310,7 +289,7 @@ public class OpcodeTest {
             new Entry(-1, 1, 0, true, false, true, false),
             new Entry(-1, -2, -3, false, true, true, false),
             new Entry(3, -2, 1, false, false, true, false),
-            new Entry(0x7FFFFFFF, 2, 0x80000001, false, true, false, true),
+            new Entry(Integer.MAX_VALUE, 1, Integer.MIN_VALUE, false, true, false, true),
         };
         InOrder inOrder = inOrder(mockedRegister);
         for (int i = 0; i < entry.length; ++i) {
@@ -318,6 +297,37 @@ public class OpcodeTest {
             when(mockedRegister.get(operands[2])).thenReturn(entry[i].op2);
             // execute SUT
             CpuCycle cc = ThumbOpcode.ADD_REG_REG.execute(cpu, operands);
+            // verify the shifted result
+            inOrder.verify(mockedRegister).set(operands[0], entry[i].result);
+            // verify flags
+            verifyFlags(inOrder, entry[i].zf, entry[i].nf, entry[i].cf, entry[i].vf);
+            // verify cycles taken
+            assertEquals(CpuCycle.CODE_S1, cc);
+        }
+    }
+
+    @Test
+    public void executeFormat_2_SUB_Register() {
+        // define the registers
+        operands[0] = 1;          // Rd
+        operands[1] = 2;          // Rs
+        operands[2] = 3;          // Rn
+        // define the data for the test
+        Entry[] entry = {
+            new Entry(2, 1, 1, false, false, false, false),
+            new Entry(0, 0, 0, true, false, false, false),
+            new Entry(4, 5, -1, false, true, true, false),
+            new Entry(-3, -3, 0, true, false, false, false),
+            new Entry(-3, -4, 1, false, false, false, false),
+            new Entry(Integer.MAX_VALUE, -1, Integer.MIN_VALUE, false, true, true, true),
+            new Entry(Integer.MIN_VALUE, 1, Integer.MAX_VALUE, false, false, false, true),
+        };
+        InOrder inOrder = inOrder(mockedRegister);
+        for (int i = 0; i < entry.length; ++i) {
+            when(mockedRegister.get(operands[1])).thenReturn(entry[i].op1);
+            when(mockedRegister.get(operands[2])).thenReturn(entry[i].op2);
+            // execute SUT
+            CpuCycle cc = ThumbOpcode.SUB_REG_REG.execute(cpu, operands);
             // verify the shifted result
             inOrder.verify(mockedRegister).set(operands[0], entry[i].result);
             // verify flags

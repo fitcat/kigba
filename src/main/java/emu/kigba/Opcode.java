@@ -121,7 +121,19 @@ enum ThumbOpcode implements Opcode {
     SUB_REG_REG("SUB") {
         @Override
         public CpuCycle execute(Cpu cpu, int[] operands) {
-            return new CpuCycle(0, 1, 0, 0, 0);
+            int rd = operands[0];
+            int rs = operands[1];
+            int rn = operands[2];
+            int rsValue = cpu.getRegister(rs);
+            int rnValue = cpu.getRegister(rn);
+            int rdValue = rsValue - rnValue;
+            cpu.setRegister(rd, rdValue);
+            cpu.setZeroFlag(rdValue == 0);
+            cpu.setSignedFlag(rdValue < 0);
+            cpu.setCarryFlag(intToUnsignedLong(rsValue) < intToUnsignedLong(rnValue));
+            long fullValue = ((long) rsValue) - rnValue;
+            cpu.setOverflowFlag((fullValue > Integer.MAX_VALUE) || (fullValue < Integer.MIN_VALUE));
+            return CpuCycle.CODE_S1;
         }
     },
     // Format 2 - 2: ADD Rd, Rs, #immed
