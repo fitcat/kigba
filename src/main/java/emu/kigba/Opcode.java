@@ -177,28 +177,63 @@ enum ThumbOpcode implements Opcode {
     MOV_IMMED("MOV") {
         @Override
         public CpuCycle execute(Cpu cpu, int[] operands) {
-            return new CpuCycle(0, 1, 0, 0, 0);
+            int rd = operands[0];
+            int immed = operands[1];
+            cpu.setRegister(rd, immed);
+            cpu.setZeroFlag(immed == 0);
+            cpu.setSignedFlag(immed < 0);
+            return CpuCycle.CODE_S1;
         }
     },
     // Format 3 - 1: CMP Rd, #immed
     CMP_IMMED("CMP") {
         @Override
         public CpuCycle execute(Cpu cpu, int[] operands) {
-            return new CpuCycle(0, 1, 0, 0, 0);
+            int rd = operands[0];
+            int immed = operands[1];
+            int rdValue = cpu.getRegister(rd);
+            int result = rdValue - immed;
+            cpu.setZeroFlag(result == 0);
+            cpu.setSignedFlag(result < 0);
+            cpu.setCarryFlag(intToUnsignedLong(rdValue) < intToUnsignedLong(immed));
+            long fullValue = ((long) rdValue) - immed;
+            cpu.setOverflowFlag((fullValue > Integer.MAX_VALUE) || (fullValue < Integer.MIN_VALUE));
+            return CpuCycle.CODE_S1;
         }
     },
     // Format 3 - 2: ADD Rd, #immed
     ADD_IMMED("ADD") {
         @Override
         public CpuCycle execute(Cpu cpu, int[] operands) {
-            return new CpuCycle(0, 1, 0, 0, 0);
+            int rd = operands[0];
+            int immed = operands[1];
+            int rdValue = cpu.getRegister(rd);
+            int result = rdValue + immed;
+            cpu.setRegister(rd, result);
+            cpu.setZeroFlag(result == 0);
+            cpu.setSignedFlag(result < 0);
+            long unsignedValue = intToUnsignedLong(rdValue) + intToUnsignedLong(immed);
+            cpu.setCarryFlag(unsignedValue > MAX_UNSIGNED_INT);
+            long fullValue = ((long) rdValue) + immed;
+            cpu.setOverflowFlag((fullValue > Integer.MAX_VALUE) || (fullValue < Integer.MIN_VALUE));
+            return CpuCycle.CODE_S1;
         }
     },
     // Format 3 - 3: SUB Rd, #immed
     SUB_IMMED("SUB") {
         @Override
         public CpuCycle execute(Cpu cpu, int[] operands) {
-            return new CpuCycle(0, 1, 0, 0, 0);
+            int rd = operands[0];
+            int immed = operands[1];
+            int rdValue = cpu.getRegister(rd);
+            int result = rdValue - immed;
+            cpu.setRegister(rd, result);
+            cpu.setZeroFlag(result == 0);
+            cpu.setSignedFlag(result < 0);
+            cpu.setCarryFlag(intToUnsignedLong(rdValue) < intToUnsignedLong(immed));
+            long fullValue = ((long) rdValue) - immed;
+            cpu.setOverflowFlag((fullValue > Integer.MAX_VALUE) || (fullValue < Integer.MIN_VALUE));
+            return CpuCycle.CODE_S1;
         }
     },
     // Format 4 - 0: AND Rd, Rs

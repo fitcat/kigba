@@ -297,7 +297,7 @@ public class OpcodeTest {
             when(mockedRegister.get(operands[2])).thenReturn(entry[i].op2);
             // execute SUT
             CpuCycle cc = ThumbOpcode.ADD_REG_REG.execute(cpu, operands);
-            // verify the shifted result
+            // verify the result
             inOrder.verify(mockedRegister).set(operands[0], entry[i].result);
             // verify flags
             verifyFlags(inOrder, entry[i].zf, entry[i].nf, entry[i].cf, entry[i].vf);
@@ -328,7 +328,7 @@ public class OpcodeTest {
             when(mockedRegister.get(operands[2])).thenReturn(entry[i].op2);
             // execute SUT
             CpuCycle cc = ThumbOpcode.SUB_REG_REG.execute(cpu, operands);
-            // verify the shifted result
+            // verify the result
             inOrder.verify(mockedRegister).set(operands[0], entry[i].result);
             // verify flags
             verifyFlags(inOrder, entry[i].zf, entry[i].nf, entry[i].cf, entry[i].vf);
@@ -358,7 +358,7 @@ public class OpcodeTest {
             operands[2] = entry[i].op2;
             // execute SUT
             CpuCycle cc = ThumbOpcode.ADD_REG_IMMED.execute(cpu, operands);
-            // verify the shifted result
+            // verify the result
             inOrder.verify(mockedRegister).set(operands[0], entry[i].result);
             // verify flags
             verifyFlags(inOrder, entry[i].zf, entry[i].nf, entry[i].cf, entry[i].vf);
@@ -387,7 +387,117 @@ public class OpcodeTest {
             operands[2] = entry[i].op2;
             // execute SUT
             CpuCycle cc = ThumbOpcode.SUB_REG_IMMED.execute(cpu, operands);
-            // verify the shifted result
+            // verify the result
+            inOrder.verify(mockedRegister).set(operands[0], entry[i].result);
+            // verify flags
+            verifyFlags(inOrder, entry[i].zf, entry[i].nf, entry[i].cf, entry[i].vf);
+            // verify cycles taken
+            assertEquals(CpuCycle.CODE_S1, cc);
+        }
+    }
+    
+    @Test
+    public void executeFormat_3_MOV() {
+        // define Rd
+        operands[0] = 4;
+        // define immed values;
+        int immed[]  = { 12345, 0, -12345 };
+        boolean zf[] = { false, true, false };
+        boolean nf[] = { false, false, true };
+        InOrder inOrder = inOrder(mockedRegister);
+        for (int i = 0; i < immed.length; ++i) {
+            operands[1] = immed[i];
+            // execute SUT
+            CpuCycle cc = ThumbOpcode.MOV_IMMED.execute(cpu, operands);
+            // verify the results
+            verify(mockedRegister).set(operands[0], immed[i]);
+            if (zf[i])
+            inOrder.verify(mockedRegister).setZero();
+            else
+                inOrder.verify(mockedRegister).clearZero();
+            if (nf[i])
+                inOrder.verify(mockedRegister).setSigned();
+            else
+                inOrder.verify(mockedRegister).clearSigned();
+        }
+    }
+    
+    @Test
+    public void executeFormat_3_CMP() {
+        // define the registers
+        operands[0] = 7;          // Rd
+        // define the data for the test
+        Entry[] entry = {
+            new Entry(2, 1, 1, false, false, false, false),
+            new Entry(0, 0, 0, true, false, false, false),
+            new Entry(1, 2, -1, false, true, true, false),
+            new Entry(-2, 255, -257, false, true, false, false),
+            new Entry(-1, 1, -2, false, true, false, false),
+            new Entry(Integer.MIN_VALUE, 1, Integer.MAX_VALUE, false, false, false, true),
+        };
+        InOrder inOrder = inOrder(mockedRegister);
+        for (int i = 0; i < entry.length; ++i) {
+            when(mockedRegister.get(operands[0])).thenReturn(entry[i].op1);
+            operands[1] = entry[i].op2;
+            // execute SUT
+            CpuCycle cc = ThumbOpcode.CMP_IMMED.execute(cpu, operands);
+            // no result to be verified (affect flags only)
+            // verify flags
+            verifyFlags(inOrder, entry[i].zf, entry[i].nf, entry[i].cf, entry[i].vf);
+            // verify cycles taken
+            assertEquals(CpuCycle.CODE_S1, cc);
+        }
+    }
+    
+    @Test
+    public void executeFormat_3_ADD() {
+        // define the registers
+        operands[0] = 6;          // Rd
+        // define the data for the test
+        Entry[] entry = {
+            new Entry(1, 2, 3, false, false, false, false),
+            new Entry(0, 0, 0, true, false, false, false),
+            new Entry(-1, 3, 2, false, false, true, false),
+            new Entry(-100, 7, -93, false, true, false, false),
+            new Entry(-1, 1, 0, true, false, true, false),
+            new Entry(-1, 2, 1, false, false, true, false),
+            new Entry(Integer.MAX_VALUE, 1, Integer.MIN_VALUE, false, true, false, true),
+        };
+        InOrder inOrder = inOrder(mockedRegister);
+        for (int i = 0; i < entry.length; ++i) {
+            when(mockedRegister.get(operands[0])).thenReturn(entry[i].op1);
+            operands[1] = entry[i].op2;
+            // execute SUT
+            CpuCycle cc = ThumbOpcode.ADD_IMMED.execute(cpu, operands);
+            // verify the result
+            inOrder.verify(mockedRegister).set(operands[0], entry[i].result);
+            // verify flags
+            verifyFlags(inOrder, entry[i].zf, entry[i].nf, entry[i].cf, entry[i].vf);
+            // verify cycles taken
+            assertEquals(CpuCycle.CODE_S1, cc);
+        }
+    }
+    
+    @Test
+    public void executeFormat_3_SUB() {
+        // define the registers
+        operands[0] = 7;          // Rd
+        // define the data for the test
+        Entry[] entry = {
+            new Entry(2, 1, 1, false, false, false, false),
+            new Entry(0, 0, 0, true, false, false, false),
+            new Entry(1, 2, -1, false, true, true, false),
+            new Entry(-2, 255, -257, false, true, false, false),
+            new Entry(-1, 1, -2, false, true, false, false),
+            new Entry(Integer.MIN_VALUE, 1, Integer.MAX_VALUE, false, false, false, true),
+        };
+        InOrder inOrder = inOrder(mockedRegister);
+        for (int i = 0; i < entry.length; ++i) {
+            when(mockedRegister.get(operands[0])).thenReturn(entry[i].op1);
+            operands[1] = entry[i].op2;
+            // execute SUT
+            CpuCycle cc = ThumbOpcode.SUB_IMMED.execute(cpu, operands);
+            // verify the result
             inOrder.verify(mockedRegister).set(operands[0], entry[i].result);
             // verify flags
             verifyFlags(inOrder, entry[i].zf, entry[i].nf, entry[i].cf, entry[i].vf);
