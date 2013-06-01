@@ -505,4 +505,79 @@ public class OpcodeTest {
             assertEquals(CpuCycle.CODE_S1, cc);
         }
     }
+    
+    @Test
+    public void executeFormat_4_AND() {
+        // define the registers
+        operands[0] = 5;          // Rd
+        operands[1] = 3;          // Rs
+        // define the data for the test
+        Entry[] entry = {
+            new Entry(0, 0, 0, true, false, false, false),
+            new Entry(1, 0, 0, true, false, false, false),
+            new Entry(0, 1, 0, true, false, false, false),
+            new Entry(15, 9, 9, false, false, false, false),
+            new Entry(33, 34, 32, false, false, false, false),
+            new Entry(-1, -2, -2, false, true, false, false),
+        };
+        InOrder inOrder = inOrder(mockedRegister);
+        for (int i = 0; i < entry.length; ++i) {
+            when(mockedRegister.get(operands[0])).thenReturn(entry[i].op1);
+            when(mockedRegister.get(operands[1])).thenReturn(entry[i].op2);
+            // execute SUT
+            CpuCycle cc = ThumbOpcode.AND_REG.execute(cpu, operands);
+            // verify the result
+            inOrder.verify(mockedRegister).set(operands[0], entry[i].result);
+            // verify flags
+            if (entry[i].zf)
+                inOrder.verify(mockedRegister).setZero();
+            else
+                inOrder.verify(mockedRegister).clearZero();
+            if (entry[i].nf)
+                inOrder.verify(mockedRegister).setSigned();
+            else
+                inOrder.verify(mockedRegister).clearSigned();
+            unchangeCarry().unchangeOverflow();
+            // verify cycles taken
+            assertEquals(CpuCycle.CODE_S1, cc);
+        }
+    }
+
+    @Test
+    public void executeFormat_4_EOR() {
+        // define the registers
+        operands[0] = 5;          // Rd
+        operands[1] = 3;          // Rs
+        // define the data for the test
+        Entry[] entry = {
+            new Entry(0, 0, 0, true, false, false, false),
+            new Entry(12345, 0, 12345, false, false, false, false),
+            new Entry(0, 54321, 54321, false, false, false, false),
+            new Entry(12345, 12345, 0, true, false, false, false),
+            new Entry(15, 9, 6, false, false, false, false),
+            new Entry(-1, 1, -2, false, true, false, false),
+            new Entry(-1, -2, 1, false, false, false, false),
+        };
+        InOrder inOrder = inOrder(mockedRegister);
+        for (int i = 0; i < entry.length; ++i) {
+            when(mockedRegister.get(operands[0])).thenReturn(entry[i].op1);
+            when(mockedRegister.get(operands[1])).thenReturn(entry[i].op2);
+            // execute SUT
+            CpuCycle cc = ThumbOpcode.EOR_REG.execute(cpu, operands);
+            // verify the result
+            inOrder.verify(mockedRegister).set(operands[0], entry[i].result);
+            // verify flags
+            if (entry[i].zf)
+                inOrder.verify(mockedRegister).setZero();
+            else
+                inOrder.verify(mockedRegister).clearZero();
+            if (entry[i].nf)
+                inOrder.verify(mockedRegister).setSigned();
+            else
+                inOrder.verify(mockedRegister).clearSigned();
+            unchangeCarry().unchangeOverflow();
+            // verify cycles taken
+            assertEquals(CpuCycle.CODE_S1, cc);
+        }
+    }
 }
