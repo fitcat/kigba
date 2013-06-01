@@ -240,14 +240,30 @@ enum ThumbOpcode implements Opcode {
     AND_REG("AND") {
         @Override
         public CpuCycle execute(Cpu cpu, int[] operands) {
-            return new CpuCycle(0, 1, 0, 0, 0);
+            int rd = operands[0];
+            int rs = operands[1];
+            int rdValue = cpu.getRegister(rd);
+            int rsValue = cpu.getRegister(rs);
+            int result = rdValue & rsValue;
+            cpu.setRegister(rd, result);
+            cpu.setZeroFlag(result == 0);
+            cpu.setSignedFlag(result < 0);
+            return CpuCycle.CODE_S1;
         }        
     },
     // Format 4 - 1: EOR Rd, Rs
     EOR_REG("EOR") {
         @Override
         public CpuCycle execute(Cpu cpu, int[] operands) {
-            return new CpuCycle(0, 1, 0, 0, 0);
+            int rd = operands[0];
+            int rs = operands[1];
+            int rdValue = cpu.getRegister(rd);
+            int rsValue = cpu.getRegister(rs);
+            int result = rdValue ^ rsValue;
+            cpu.setRegister(rd, result);
+            cpu.setZeroFlag(result == 0);
+            cpu.setSignedFlag(result < 0);
+            return CpuCycle.CODE_S1;
         }        
     },
     // Format 4 - 2: LSL Rd, Rs
